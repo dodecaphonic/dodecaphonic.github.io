@@ -2,9 +2,9 @@
 <html lang="en"><head>
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="viewport" content="width=device-width, initial-scale=1"><!-- Begin Jekyll SEO tag v2.5.0 -->
+  <meta name="viewport" content="width=device-width, initial-scale=1"><!-- Begin Jekyll SEO tag v2.7.1 -->
 <title>Property-based testing in Ruby | Troika Tech</title>
-<meta name="generator" content="Jekyll v3.8.5" />
+<meta name="generator" content="Jekyll v3.9.0" />
 <meta property="og:title" content="Property-based testing in Ruby" />
 <meta property="og:locale" content="en_US" />
 <meta name="description" content="For the past year or so I have slowly been dipping my feet into the vast functional programming seas. From taking the awesome Coursera offerings from Typesafe to slowly working through Rúnar Bjarnason’s and Paul Chiusano’s Functional Programming in Scala, my mind has been expanding proportionally to the time I dedicate to learning its ways. It has been incredibly rewarding and humbling." />
@@ -14,8 +14,10 @@
 <meta property="og:site_name" content="Troika Tech" />
 <meta property="og:type" content="article" />
 <meta property="article:published_time" content="2014-04-02T10:32:00-03:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="Property-based testing in Ruby" />
 <script type="application/ld+json">
-{"mainEntityOfPage":{"@type":"WebPage","@id":"http://troikatech.com/blog/2014/04/02/property-based-testing-in-ruby/"},"url":"http://troikatech.com/blog/2014/04/02/property-based-testing-in-ruby/","@type":"BlogPosting","description":"For the past year or so I have slowly been dipping my feet into the vast functional programming seas. From taking the awesome Coursera offerings from Typesafe to slowly working through Rúnar Bjarnason’s and Paul Chiusano’s Functional Programming in Scala, my mind has been expanding proportionally to the time I dedicate to learning its ways. It has been incredibly rewarding and humbling.","headline":"Property-based testing in Ruby","dateModified":"2014-04-02T10:32:00-03:00","datePublished":"2014-04-02T10:32:00-03:00","@context":"http://schema.org"}</script>
+{"url":"http://troikatech.com/blog/2014/04/02/property-based-testing-in-ruby/","headline":"Property-based testing in Ruby","dateModified":"2014-04-02T10:32:00-03:00","datePublished":"2014-04-02T10:32:00-03:00","@type":"BlogPosting","description":"For the past year or so I have slowly been dipping my feet into the vast functional programming seas. From taking the awesome Coursera offerings from Typesafe to slowly working through Rúnar Bjarnason’s and Paul Chiusano’s Functional Programming in Scala, my mind has been expanding proportionally to the time I dedicate to learning its ways. It has been incredibly rewarding and humbling.","mainEntityOfPage":{"@type":"WebPage","@id":"http://troikatech.com/blog/2014/04/02/property-based-testing-in-ruby/"},"@context":"https://schema.org"}</script>
 <!-- End Jekyll SEO tag -->
 <link rel="stylesheet" href="/assets/main.css"><link type="application/atom+xml" rel="alternate" href="http://troikatech.com/feed.xml" title="Troika Tech" /></head>
 <body><header class="site-header" role="banner">
@@ -169,7 +171,7 @@
 <span class="k">end</span>
 </code></pre></div></div>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Run options: --seed 48889
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Run options: --seed 48889
 
 # Running:
 
@@ -196,7 +198,7 @@ Finished in 0.001256s, 796.1783 runs/s, 3184.7134 assertions/s.
 
 <p>The meat is in the <code>check</code> block. Determining that a list has been reversed correctly requires us to check if reversing it again gets us back to the original list. To seed our check, we build a <code>property</code> block that creats an array with a random length between 0 and 1_000_000, itself filled with random integers. Let’s run the tests again:</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>$ bundle exec ruby list.rb
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>$ bundle exec ruby list.rb
 Run options: --seed 17130
 
 # Running:
@@ -368,7 +370,7 @@ Finished in 121.969127s, 0.0164 runs/s, 0.8527 assertions/s.
 
 <p>It looks good:</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>$ bundle exec ruby set_test.rb
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>$ bundle exec ruby set_test.rb
 Run options: --seed 15625
 
 # Running:
@@ -469,7 +471,7 @@ Finished in 0.119717s, 33.4121 runs/s, 1720.7247 assertions/s.
 
 <p>You run it and it explodes:</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>$ bundle exec ruby set_test.rb
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>$ bundle exec ruby set_test.rb
 Run options: --seed 46455
 
 # Running:
@@ -497,7 +499,7 @@ Expected: 8
 
 <p>What? How come you’ve only got 2 when you expected 8? Well, there must be something wrong with delete, after all. Let’s take that array and try it on an <em>pry</em> session to see what happens:</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>[1] pry(main)&gt; values = [384, 437, 120, 718, 1850, 4579, 3178, 4191, 533, 2669]
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>[1] pry(main)&gt; values = [384, 437, 120, 718, 1850, 4579, 3178, 4191, 533, 2669]
 =&gt; [384, 437, 120, 718, 1850, 4579, 3178, 4191, 533, 2669]
 [2] pry(main)&gt; os = values.inject(DumbSet.new) { |s, v| s &lt;&lt; v }
 =&gt; #&lt;DumbSet...&gt;
@@ -507,7 +509,7 @@ Expected: 8
 
 <p>Wait a minute! Should delete also remove everything that’s over 1000-ish? Is there anything in the code that stipulates such a thing? Maybe that node.js optimization was not so great after all. Let’s remove it and run the tests:</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>$ bundle exec ruby set_test.rb
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>$ bundle exec ruby set_test.rb
 Run options: --seed 2727
 
 # Running:

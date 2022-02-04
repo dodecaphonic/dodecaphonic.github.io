@@ -2,9 +2,9 @@
 <html lang="en"><head>
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="viewport" content="width=device-width, initial-scale=1"><!-- Begin Jekyll SEO tag v2.5.0 -->
+  <meta name="viewport" content="width=device-width, initial-scale=1"><!-- Begin Jekyll SEO tag v2.7.1 -->
 <title>ENSIME and Emacs as a Scala IDE | Troika Tech</title>
-<meta name="generator" content="Jekyll v3.8.5" />
+<meta name="generator" content="Jekyll v3.9.0" />
 <meta property="og:title" content="ENSIME and Emacs as a Scala IDE" />
 <meta property="og:locale" content="en_US" />
 <meta name="description" content="“Maybe Emacs is not enough.”" />
@@ -14,8 +14,10 @@
 <meta property="og:site_name" content="Troika Tech" />
 <meta property="og:type" content="article" />
 <meta property="article:published_time" content="2014-11-26T10:38:00-02:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="ENSIME and Emacs as a Scala IDE" />
 <script type="application/ld+json">
-{"mainEntityOfPage":{"@type":"WebPage","@id":"http://troikatech.com/blog/2014/11/26/ensime-and-emacs-as-a-scala-ide/"},"url":"http://troikatech.com/blog/2014/11/26/ensime-and-emacs-as-a-scala-ide/","@type":"BlogPosting","description":"“Maybe Emacs is not enough.”","headline":"ENSIME and Emacs as a Scala IDE","dateModified":"2014-11-26T10:38:00-02:00","datePublished":"2014-11-26T10:38:00-02:00","@context":"http://schema.org"}</script>
+{"url":"http://troikatech.com/blog/2014/11/26/ensime-and-emacs-as-a-scala-ide/","headline":"ENSIME and Emacs as a Scala IDE","dateModified":"2014-11-26T10:38:00-02:00","datePublished":"2014-11-26T10:38:00-02:00","@type":"BlogPosting","description":"“Maybe Emacs is not enough.”","mainEntityOfPage":{"@type":"WebPage","@id":"http://troikatech.com/blog/2014/11/26/ensime-and-emacs-as-a-scala-ide/"},"@context":"https://schema.org"}</script>
 <!-- End Jekyll SEO tag -->
 <link rel="stylesheet" href="/assets/main.css"><link type="application/atom+xml" rel="alternate" href="http://troikatech.com/feed.xml" title="Troika Tech" /></head>
 <body><header class="site-header" role="banner">
@@ -51,7 +53,7 @@
 
 <p>When I started on this slow path towards learning FP, I had been using dynamic languages almost exclusively for almost 14 years, with a short stop in C++-land for a couple of them. I was used to a world of mostly ok tools centered on a REPL, and it was fine — programming is more thinking than typing and clicking, that whole <em>spiel</em>. But I had never really done anything in a good type system, and, frankly, it was time I knew how the rest of the world leveraged their tools in order to work more comfortably and effectively.</p>
 
-<p>With that in mind, I evaluated the Typesafe IDE and IntelliJ IDEA 12 and 13, finding a lot of good in both tools (and a few problems, some discussed in my post about the <a href="/blog/2014/01/12/reactive">Reactive Programming course</a>). Still, after a few good days with each option, I was tempted to just go back to Emacs and rely on my memory (and <a href="http://kapeli.com/dash">Dash</a>) for the API signatures, do all my code refactorings by hand and use the <code class="highlighter-rouge">sbt console</code> for quick explorations.</p>
+<p>With that in mind, I evaluated the Typesafe IDE and IntelliJ IDEA 12 and 13, finding a lot of good in both tools (and a few problems, some discussed in my post about the <a href="/blog/2014/01/12/reactive">Reactive Programming course</a>). Still, after a few good days with each option, I was tempted to just go back to Emacs and rely on my memory (and <a href="http://kapeli.com/dash">Dash</a>) for the API signatures, do all my code refactorings by hand and use the <code class="language-plaintext highlighter-rouge">sbt console</code> for quick explorations.</p>
 
 <p>Then I found out I could have the cake and eat it too.</p>
 
@@ -59,40 +61,40 @@
 
 <p>ENSIME (<strong>ENhanced Scala Interaction Mode for Emacs</strong>) is a project that gives Emacs IDE-like capabilities. It performs type and error-checking as you write code, provides symbol inspection, facilities for browsing your codebase and performing automated refactorings. It accomplishes all that using the <a href="http://scala-ide.org/docs/dev/architecture/presentation-compiler.html">Scala Presentation Compiler</a>, a lightweight version of the infrastructure that goes only as far as needed to resolve types, find errors and do semantic highlighting.</p>
 
-<p>Setting it up is super simple. Using MELPA, install the <code class="highlighter-rouge">ensime</code> package. Then add the following to your Emacs config:</p>
+<p>Setting it up is super simple. Using MELPA, install the <code class="language-plaintext highlighter-rouge">ensime</code> package. Then add the following to your Emacs config:</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>(require 'ensime)
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>(require 'ensime)
 (add-hook 'scala-mode-hook 'ensime-scala-mode-hook)
 </code></pre></div></div>
 
-<p>Then add the plugin to your global <code class="highlighter-rouge">sbt</code> config (e.g. <code class="highlighter-rouge">~/.sbt/0.13/plugins/plugins.sbt</code>):</p>
+<p>Then add the plugin to your global <code class="language-plaintext highlighter-rouge">sbt</code> config (e.g. <code class="language-plaintext highlighter-rouge">~/.sbt/0.13/plugins/plugins.sbt</code>):</p>
 
-<div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">resolvers</span> <span class="o">+=</span> <span class="nc">Resolver</span><span class="o">.</span><span class="n">sonatypeRepo</span><span class="o">(</span><span class="s">"snapshots"</span><span class="o">)</span>
+<div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">resolvers</span> <span class="o">+=</span> <span class="nv">Resolver</span><span class="o">.</span><span class="py">sonatypeRepo</span><span class="o">(</span><span class="s">"snapshots"</span><span class="o">)</span>
 
-<span class="n">addSbtPlugin</span><span class="o">(</span><span class="s">"org.ensime"</span> <span class="o">%</span> <span class="s">"ensime-sbt"</span> <span class="o">%</span> <span class="s">"0.1.5-SNAPSHOT"</span><span class="o">)</span>
+<span class="nf">addSbtPlugin</span><span class="o">(</span><span class="s">"org.ensime"</span> <span class="o">%</span> <span class="s">"ensime-sbt"</span> <span class="o">%</span> <span class="s">"0.1.5-SNAPSHOT"</span><span class="o">)</span>
 </code></pre></div></div>
 
-<p>And then, in your project directory, run <code class="highlighter-rouge">sbt gen-ensime</code> (requires sbt &gt;= 0.13.5). It will resolve the dependencies, install the ENSIME plugin and leave everything ready to go.</p>
+<p>And then, in your project directory, run <code class="language-plaintext highlighter-rouge">sbt gen-ensime</code> (requires sbt &gt;= 0.13.5). It will resolve the dependencies, install the ENSIME plugin and leave everything ready to go.</p>
 
 <p>Now, when you open a buffer, you’re gonna see the following in your mode line:</p>
 
 <p><img src="https://dl.dropboxusercontent.com/s/zss0kz5lr8hvhmr/2014-11-27%20at%2010.22.png" title="ENSIME Disconnected" /></p>
 
-<p>Use <code class="highlighter-rouge">M-x ensime</code> to start a connection. It might take a few seconds for it to do what it must to analyze your project, but you’ll eventually see the mode line change to show it’s ready to work.</p>
+<p>Use <code class="language-plaintext highlighter-rouge">M-x ensime</code> to start a connection. It might take a few seconds for it to do what it must to analyze your project, but you’ll eventually see the mode line change to show it’s ready to work.</p>
 
 <h2 id="code-completion">Code completion</h2>
 
-<p>One of the cool things ENSIME provides is real code completion, based on the type you’re dealing with. Instead of the usual <code class="highlighter-rouge">M-/</code> cycling, you can explore an API by looking at the method signatures and documentation. Here’s the thing in action:</p>
+<p>One of the cool things ENSIME provides is real code completion, based on the type you’re dealing with. Instead of the usual <code class="language-plaintext highlighter-rouge">M-/</code> cycling, you can explore an API by looking at the method signatures and documentation. Here’s the thing in action:</p>
 
 <p><img src="https://s3.amazonaws.com/troikatech/ensime_as_ide/completion.gif" title="Completing" /></p>
 
 <h2 id="type-inspection">Type inspection</h2>
 
-<p>Sometimes Scala’s type inference engine gets confused, giving you something too broad or too narrow for your needs; other times, you just want to know the type of a <code class="highlighter-rouge">val</code>. Worry not: ENSIME can tell you what has been inferenced just by putting the cursor over the token you want and pressing <code class="highlighter-rouge">C-c C-v i</code> (works a bit like <code class="highlighter-rouge">:t</code> in <code class="highlighter-rouge">ghci</code>).</p>
+<p>Sometimes Scala’s type inference engine gets confused, giving you something too broad or too narrow for your needs; other times, you just want to know the type of a <code class="language-plaintext highlighter-rouge">val</code>. Worry not: ENSIME can tell you what has been inferenced just by putting the cursor over the token you want and pressing <code class="language-plaintext highlighter-rouge">C-c C-v i</code> (works a bit like <code class="language-plaintext highlighter-rouge">:t</code> in <code class="language-plaintext highlighter-rouge">ghci</code>).</p>
 
 <p><img src="https://s3.amazonaws.com/troikatech/ensime_as_ide/type_at_point.gif" title="Inspecting types" /></p>
 
-<p>You can also show uses of a symbol by pressing <code class="highlighter-rouge">C-c C-v r</code>.</p>
+<p>You can also show uses of a symbol by pressing <code class="language-plaintext highlighter-rouge">C-c C-v r</code>.</p>
 
 <h2 id="automated-refactorings">Automated Refactorings</h2>
 
@@ -109,21 +111,21 @@
 
 <p><img src="https://s3.amazonaws.com/troikatech/ensime_as_ide/refactoring.gif" title="Refactoring" /></p>
 
-<p>Of all of these, <em>Import Type at Point</em> is the only one I’d consider flaky. It resolves the type perfectly, but inserts the <code class="highlighter-rouge">import</code> statement inline. I don’t know if that’s configurable. Otherwise, it works as many other automated tools: finds each change, shows you the substitution, asks you to ok it.</p>
+<p>Of all of these, <em>Import Type at Point</em> is the only one I’d consider flaky. It resolves the type perfectly, but inserts the <code class="language-plaintext highlighter-rouge">import</code> statement inline. I don’t know if that’s configurable. Otherwise, it works as many other automated tools: finds each change, shows you the substitution, asks you to ok it.</p>
 
 <h2 id="navigation">Navigation</h2>
 
-<p>You can use <code class="highlighter-rouge">M-.</code> and <code class="highlighter-rouge">M-*</code>, normally associated with finding tags, to move inside your project.</p>
+<p>You can use <code class="language-plaintext highlighter-rouge">M-.</code> and <code class="language-plaintext highlighter-rouge">M-*</code>, normally associated with finding tags, to move inside your project.</p>
 
 <p><img src="https://s3.amazonaws.com/troikatech/ensime_as_ide/navigation.gif" title="Navigation" /></p>
 
 <p>You can also jump from implementation to test, and vice versa.</p>
 
-<h2 id="scala-and-sbt-integration"><code class="highlighter-rouge">scala</code> and <code class="highlighter-rouge">sbt</code> integration</h2>
+<h2 id="scala-and-sbt-integration"><code class="language-plaintext highlighter-rouge">scala</code> and <code class="language-plaintext highlighter-rouge">sbt</code> integration</h2>
 
-<p>If you press <code class="highlighter-rouge">C-c C-v s</code>, an sbt console will be launched. A lot of my usual Ruby workflow of running specs from keybinds and jumping quickly to the REPL can be reproduced with this feature.</p>
+<p>If you press <code class="language-plaintext highlighter-rouge">C-c C-v s</code>, an sbt console will be launched. A lot of my usual Ruby workflow of running specs from keybinds and jumping quickly to the REPL can be reproduced with this feature.</p>
 
-<p>For instance, when you want to run all tests, you press <code class="highlighter-rouge">C-c C-b T</code>. When you wish only to invoke <code class="highlighter-rouge">testQuick</code>, you use <code class="highlighter-rouge">C-c C-b t</code>.</p>
+<p>For instance, when you want to run all tests, you press <code class="language-plaintext highlighter-rouge">C-c C-b T</code>. When you wish only to invoke <code class="language-plaintext highlighter-rouge">testQuick</code>, you use <code class="language-plaintext highlighter-rouge">C-c C-b t</code>.</p>
 
 <p>There’s keybinds for changing a region or a buffer, too — useful both for playing with code and exercising your Emacs gymnastics.</p>
 

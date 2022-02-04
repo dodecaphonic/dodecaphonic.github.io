@@ -2,9 +2,9 @@
 <html lang="en"><head>
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="viewport" content="width=device-width, initial-scale=1"><!-- Begin Jekyll SEO tag v2.5.0 -->
+  <meta name="viewport" content="width=device-width, initial-scale=1"><!-- Begin Jekyll SEO tag v2.7.1 -->
 <title>fp-ts overview: Error handling, the functional way (part 1) | Troika Tech</title>
-<meta name="generator" content="Jekyll v3.8.5" />
+<meta name="generator" content="Jekyll v3.9.0" />
 <meta property="og:title" content="fp-ts overview: Error handling, the functional way (part 1)" />
 <meta property="og:locale" content="en_US" />
 <meta name="description" content="In most codebases, error-handling means exceptions. A team will carefully considering potential problems, then create sets of exceptions by extending some error class that will be used to signify something in the application domain went wrong." />
@@ -14,8 +14,10 @@
 <meta property="og:site_name" content="Troika Tech" />
 <meta property="og:type" content="article" />
 <meta property="article:published_time" content="2020-09-24T10:15:00-03:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="fp-ts overview: Error handling, the functional way (part 1)" />
 <script type="application/ld+json">
-{"mainEntityOfPage":{"@type":"WebPage","@id":"http://troikatech.com/blog/2020/09/24/fp-ts-error-handling-the-functional-way/"},"url":"http://troikatech.com/blog/2020/09/24/fp-ts-error-handling-the-functional-way/","@type":"BlogPosting","description":"In most codebases, error-handling means exceptions. A team will carefully considering potential problems, then create sets of exceptions by extending some error class that will be used to signify something in the application domain went wrong.","headline":"fp-ts overview: Error handling, the functional way (part 1)","dateModified":"2020-09-24T10:15:00-03:00","datePublished":"2020-09-24T10:15:00-03:00","@context":"http://schema.org"}</script>
+{"url":"http://troikatech.com/blog/2020/09/24/fp-ts-error-handling-the-functional-way/","headline":"fp-ts overview: Error handling, the functional way (part 1)","dateModified":"2020-09-24T10:15:00-03:00","datePublished":"2020-09-24T10:15:00-03:00","@type":"BlogPosting","description":"In most codebases, error-handling means exceptions. A team will carefully considering potential problems, then create sets of exceptions by extending some error class that will be used to signify something in the application domain went wrong.","mainEntityOfPage":{"@type":"WebPage","@id":"http://troikatech.com/blog/2020/09/24/fp-ts-error-handling-the-functional-way/"},"@context":"https://schema.org"}</script>
 <!-- End Jekyll SEO tag -->
 <link rel="stylesheet" href="/assets/main.css"><link type="application/atom+xml" rel="alternate" href="http://troikatech.com/feed.xml" title="Troika Tech" /></head>
 <body><header class="site-header" role="banner">
@@ -56,43 +58,43 @@
   <li>We would benefit from treating errors less like landmines and more like integral parts of our code.</li>
 </ul>
 
-<p>These are not original thoughts. Programmers have tried finding ways to make error handling a top concern for decades, and a few different designs are present in mainstream(-ish) languages. Java has <a href="https://en.wikibooks.org/wiki/Java_Programming/Checked_Exceptions">checked exceptions</a>; Go has the infamous <code class="highlighter-rouge">if err != nil</code> pattern; Erlang APIs often return an <code class="highlighter-rouge">err</code> that you check before advancing.</p>
+<p>These are not original thoughts. Programmers have tried finding ways to make error handling a top concern for decades, and a few different designs are present in mainstream(-ish) languages. Java has <a href="https://en.wikibooks.org/wiki/Java_Programming/Checked_Exceptions">checked exceptions</a>; Go has the infamous <code class="language-plaintext highlighter-rouge">if err != nil</code> pattern; Erlang APIs often return an <code class="language-plaintext highlighter-rouge">err</code> that you check before advancing.</p>
 
 <p>These are often inconvenient enough that they lead either to sloppiness (errors being ignored or supressed under the assumption that they’re not important or severe enough) or confusion (the happy path becoming muddled by error checking code).</p>
 
-<p>Modern statically-typed functional programming helps us with that by giving us structures and tools that act as a living document of what might wrong, let us defer handling errors, and make that happy path easy to write (and, more importantly, clear to read). One of these tools is <code class="highlighter-rouge">Either</code>.</p>
+<p>Modern statically-typed functional programming helps us with that by giving us structures and tools that act as a living document of what might wrong, let us defer handling errors, and make that happy path easy to write (and, more importantly, clear to read). One of these tools is <code class="language-plaintext highlighter-rouge">Either</code>.</p>
 
 <h1 id="pushing-errors-to-the-forefront">Pushing errors to the forefront</h1>
 
-<p>The key is making errors <em>values</em> like any other. Unlike relying on implicit behavior, we return an <code class="highlighter-rouge">Either&lt;E, A&gt;</code>, which gives us a <em>left</em> branch (the <code class="highlighter-rouge">E</code> type, normally used to denote failures), and a <em>right</em> branch (the <code class="highlighter-rouge">A</code> type, for our desired outcomes).</p>
+<p>The key is making errors <em>values</em> like any other. Unlike relying on implicit behavior, we return an <code class="language-plaintext highlighter-rouge">Either&lt;E, A&gt;</code>, which gives us a <em>left</em> branch (the <code class="language-plaintext highlighter-rouge">E</code> type, normally used to denote failures), and a <em>right</em> branch (the <code class="language-plaintext highlighter-rouge">A</code> type, for our desired outcomes).</p>
 
-<p>That doesn’t imply we have to write tentative code, verifying at every step whether we have a failure or a success. Because <code class="highlighter-rouge">Either</code> favors its right branch, we are able to build data processing pipelines that operate safely, only reaching for the result at the latest possible moment. In practice, this means <em>we can’t forget to deal with failures</em>.</p>
+<p>That doesn’t imply we have to write tentative code, verifying at every step whether we have a failure or a success. Because <code class="language-plaintext highlighter-rouge">Either</code> favors its right branch, we are able to build data processing pipelines that operate safely, only reaching for the result at the latest possible moment. In practice, this means <em>we can’t forget to deal with failures</em>.</p>
 
 <p>Here’s an example:</p>
 
-<div class="language-typescript highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">import</span> <span class="p">{</span> <span class="nx">pipe</span> <span class="p">}</span> <span class="k">from</span> <span class="s2">"fp-ts/lib/pipeable"</span><span class="p">;</span>
-<span class="k">import</span> <span class="o">*</span> <span class="k">as</span> <span class="nx">E</span> <span class="k">from</span> <span class="s2">"fp-ts/lib/Either"</span><span class="p">;</span>
+<div class="language-typescript highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">import</span> <span class="p">{</span> <span class="nx">pipe</span> <span class="p">}</span> <span class="k">from</span> <span class="dl">"</span><span class="s2">fp-ts/lib/pipeable</span><span class="dl">"</span><span class="p">;</span>
+<span class="k">import</span> <span class="o">*</span> <span class="k">as</span> <span class="nx">E</span> <span class="k">from</span> <span class="dl">"</span><span class="s2">fp-ts/lib/Either</span><span class="dl">"</span><span class="p">;</span>
 
 <span class="k">import</span> <span class="nx">Either</span> <span class="o">=</span> <span class="nx">E</span><span class="p">.</span><span class="nx">Either</span><span class="p">;</span>
 
-<span class="nx">type</span> <span class="nx">Transaction</span> <span class="o">=</span> <span class="nx">unknown</span><span class="p">;</span>
-<span class="nx">type</span> <span class="nx">Balance</span> <span class="o">=</span> <span class="nx">unknown</span><span class="p">;</span>
-<span class="nx">type</span> <span class="nx">StatementError</span> <span class="o">=</span>
-  <span class="o">|</span> <span class="s2">"invalid bank account"</span>
-  <span class="o">|</span> <span class="s2">"missing account number"</span>
-  <span class="o">|</span> <span class="s2">"malformed header"</span>
-  <span class="o">|</span> <span class="s2">"transaction can't be zeroes"</span><span class="p">;</span>
+<span class="kd">type</span> <span class="nx">Transaction</span> <span class="o">=</span> <span class="nx">unknown</span><span class="p">;</span>
+<span class="kd">type</span> <span class="nx">Balance</span> <span class="o">=</span> <span class="nx">unknown</span><span class="p">;</span>
+<span class="kd">type</span> <span class="nx">StatementError</span> <span class="o">=</span>
+  <span class="o">|</span> <span class="dl">"</span><span class="s2">invalid bank account</span><span class="dl">"</span>
+  <span class="o">|</span> <span class="dl">"</span><span class="s2">missing account number</span><span class="dl">"</span>
+  <span class="o">|</span> <span class="dl">"</span><span class="s2">malformed header</span><span class="dl">"</span>
+  <span class="o">|</span> <span class="dl">"</span><span class="s2">transaction can't be zeroes</span><span class="dl">"</span><span class="p">;</span>
 
 <span class="kr">interface</span> <span class="nx">Statement</span> <span class="p">{</span>
-  <span class="nx">readonly</span> <span class="nx">transactions</span><span class="p">:</span> <span class="nx">Transaction</span><span class="p">[];</span>
+  <span class="k">readonly</span> <span class="nx">transactions</span><span class="p">:</span> <span class="nx">Transaction</span><span class="p">[];</span>
 <span class="p">}</span>
 
-<span class="nx">declare</span> <span class="kd">function</span> <span class="nx">parseBankStatement</span><span class="p">(</span><span class="nx">rawStatement</span><span class="p">:</span> <span class="nx">string</span><span class="p">):</span> <span class="nx">Either</span><span class="o">&lt;</span><span class="nx">StatementError</span><span class="p">,</span> <span class="nx">Statement</span><span class="o">&gt;</span><span class="p">;</span>
-<span class="nx">declare</span> <span class="kd">function</span> <span class="nx">validateTransactions</span><span class="p">(</span><span class="nx">transactions</span><span class="p">:</span> <span class="nx">Transaction</span><span class="p">[]):</span> <span class="nx">Either</span><span class="o">&lt;</span><span class="nx">StatementError</span><span class="p">,</span> <span class="nx">Transaction</span><span class="p">[]</span><span class="o">&gt;</span><span class="p">;</span>
-<span class="nx">declare</span> <span class="kd">function</span> <span class="nx">buildBalance</span><span class="p">(</span><span class="nx">transactions</span><span class="p">:</span> <span class="nx">Transaction</span><span class="p">[]):</span> <span class="nx">Balance</span><span class="p">;</span>
+<span class="kr">declare</span> <span class="kd">function</span> <span class="nx">parseBankStatement</span><span class="p">(</span><span class="nx">rawStatement</span><span class="p">:</span> <span class="kr">string</span><span class="p">):</span> <span class="nx">Either</span><span class="o">&lt;</span><span class="nx">StatementError</span><span class="p">,</span> <span class="nx">Statement</span><span class="o">&gt;</span><span class="p">;</span>
+<span class="kr">declare</span> <span class="kd">function</span> <span class="nx">validateTransactions</span><span class="p">(</span><span class="nx">transactions</span><span class="p">:</span> <span class="nx">Transaction</span><span class="p">[]):</span> <span class="nx">Either</span><span class="o">&lt;</span><span class="nx">StatementError</span><span class="p">,</span> <span class="nx">Transaction</span><span class="p">[]</span><span class="o">&gt;</span><span class="p">;</span>
+<span class="kr">declare</span> <span class="kd">function</span> <span class="nx">buildBalance</span><span class="p">(</span><span class="nx">transactions</span><span class="p">:</span> <span class="nx">Transaction</span><span class="p">[]):</span> <span class="nx">Balance</span><span class="p">;</span>
 
 <span class="kd">const</span> <span class="nx">balanceFromRawStatement</span> <span class="o">=</span> <span class="p">(</span>
-  <span class="nx">rawStatement</span><span class="p">:</span> <span class="nx">string</span>
+  <span class="nx">rawStatement</span><span class="p">:</span> <span class="kr">string</span>
 <span class="p">):</span> <span class="nx">Either</span><span class="o">&lt;</span><span class="nx">StatementError</span><span class="p">,</span> <span class="nx">Balance</span><span class="o">&gt;</span> <span class="o">=&gt;</span>
   <span class="nx">pipe</span><span class="p">(</span>
     <span class="nx">parseBankStatement</span><span class="p">(</span><span class="nx">rawStatement</span><span class="p">),</span>
@@ -102,34 +104,34 @@
   <span class="p">);</span>
 </code></pre></div></div>
 
-<p>We move data from step to step as if nothing had gone wrong. If <code class="highlighter-rouge">parseBankStatements</code> returns a <code class="highlighter-rouge">Left</code>, everything else is a no-op; if <code class="highlighter-rouge">validateTransactions</code> returns a <code class="highlighter-rouge">Left</code>, the last <code class="highlighter-rouge">E.map</code> will be skipped. Whatever happens, we don’t have to mix error-handling with the main logic.</p>
+<p>We move data from step to step as if nothing had gone wrong. If <code class="language-plaintext highlighter-rouge">parseBankStatements</code> returns a <code class="language-plaintext highlighter-rouge">Left</code>, everything else is a no-op; if <code class="language-plaintext highlighter-rouge">validateTransactions</code> returns a <code class="language-plaintext highlighter-rouge">Left</code>, the last <code class="language-plaintext highlighter-rouge">E.map</code> will be skipped. Whatever happens, we don’t have to mix error-handling with the main logic.</p>
 
 <h1 id="a-note-about-either-and-errors">A note about Either and <em>errors</em></h1>
 
-<p>The <code class="highlighter-rouge">E</code> in <code class="highlighter-rouge">Either&lt;E, A&gt;</code> can be whatever we want. It doesn’t even have to be an “error”, per se, though the default short-circuiting semantics associated with the left branch remain whatever type ends up being used.</p>
+<p>The <code class="language-plaintext highlighter-rouge">E</code> in <code class="language-plaintext highlighter-rouge">Either&lt;E, A&gt;</code> can be whatever we want. It doesn’t even have to be an “error”, per se, though the default short-circuiting semantics associated with the left branch remain whatever type ends up being used.</p>
 
 <h1 id="employing-either">Employing Either</h1>
 
-<p>As with many things in fp-ts, we will use <code class="highlighter-rouge">pipe</code> often. This is mostly for type inferencing reasons, though it also helps us in keeping code declarative by not introducing bindings to hold intermediary steps.</p>
+<p>As with many things in fp-ts, we will use <code class="language-plaintext highlighter-rouge">pipe</code> often. This is mostly for type inferencing reasons, though it also helps us in keeping code declarative by not introducing bindings to hold intermediary steps.</p>
 
 <h2 id="putting-things-in-eithers">Putting things in Eithers</h2>
 
-<p>We use <code class="highlighter-rouge">right</code> to create a value in the right branch, <code class="highlighter-rouge">left</code> in the left branch:</p>
+<p>We use <code class="language-plaintext highlighter-rouge">right</code> to create a value in the right branch, <code class="language-plaintext highlighter-rouge">left</code> in the left branch:</p>
 
-<div class="language-typescript highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">import</span> <span class="p">{</span> <span class="nx">pipe</span> <span class="p">}</span> <span class="k">from</span> <span class="s2">"fp-ts/lib/pipeable"</span><span class="p">;</span>
-<span class="k">import</span> <span class="o">*</span> <span class="k">as</span> <span class="nx">E</span> <span class="k">from</span> <span class="s2">"fp-ts/lib/Either"</span><span class="p">;</span>
+<div class="language-typescript highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">import</span> <span class="p">{</span> <span class="nx">pipe</span> <span class="p">}</span> <span class="k">from</span> <span class="dl">"</span><span class="s2">fp-ts/lib/pipeable</span><span class="dl">"</span><span class="p">;</span>
+<span class="k">import</span> <span class="o">*</span> <span class="k">as</span> <span class="nx">E</span> <span class="k">from</span> <span class="dl">"</span><span class="s2">fp-ts/lib/Either</span><span class="dl">"</span><span class="p">;</span>
 
 <span class="k">import</span> <span class="nx">Either</span> <span class="o">=</span> <span class="nx">E</span><span class="p">.</span><span class="nx">Either</span><span class="p">;</span>
 
-<span class="kd">const</span> <span class="nx">goodValue</span><span class="p">:</span> <span class="nx">Either</span><span class="o">&lt;</span><span class="nb">Error</span><span class="p">,</span> <span class="nx">string</span><span class="o">&gt;</span> <span class="o">=</span> <span class="nx">E</span><span class="p">.</span><span class="nx">right</span><span class="p">(</span><span class="s2">"Good"</span><span class="p">);</span>
-<span class="kd">const</span> <span class="nx">badValue</span><span class="p">:</span> <span class="nx">Either</span><span class="o">&lt;</span><span class="nb">Error</span><span class="p">,</span> <span class="nx">string</span><span class="o">&gt;</span> <span class="o">=</span> <span class="nx">E</span><span class="p">.</span><span class="nx">left</span><span class="p">(</span><span class="k">new</span> <span class="nb">Error</span><span class="p">(</span><span class="s2">"Bad"</span><span class="p">));</span>
+<span class="kd">const</span> <span class="nx">goodValue</span><span class="p">:</span> <span class="nx">Either</span><span class="o">&lt;</span><span class="nb">Error</span><span class="p">,</span> <span class="kr">string</span><span class="o">&gt;</span> <span class="o">=</span> <span class="nx">E</span><span class="p">.</span><span class="nx">right</span><span class="p">(</span><span class="dl">"</span><span class="s2">Good</span><span class="dl">"</span><span class="p">);</span>
+<span class="kd">const</span> <span class="nx">badValue</span><span class="p">:</span> <span class="nx">Either</span><span class="o">&lt;</span><span class="nb">Error</span><span class="p">,</span> <span class="kr">string</span><span class="o">&gt;</span> <span class="o">=</span> <span class="nx">E</span><span class="p">.</span><span class="nx">left</span><span class="p">(</span><span class="k">new</span> <span class="nb">Error</span><span class="p">(</span><span class="dl">"</span><span class="s2">Bad</span><span class="dl">"</span><span class="p">));</span>
 </code></pre></div></div>
 
 <h2 id="working-with-eithers-when-we-have-rights">Working with Eithers when we have Rights</h2>
 
-<p>We can use <code class="highlighter-rouge">map</code> (from Functor) or <code class="highlighter-rouge">chain</code> (from Monad). The main practical difference is that the former allows us to transform the value while keeping it in the right branch, and the latter confers us the power to decide whether to keep on the right or move to the left (i.e. we can decide a computation should be treated as an error from then on).</p>
+<p>We can use <code class="language-plaintext highlighter-rouge">map</code> (from Functor) or <code class="language-plaintext highlighter-rouge">chain</code> (from Monad). The main practical difference is that the former allows us to transform the value while keeping it in the right branch, and the latter confers us the power to decide whether to keep on the right or move to the left (i.e. we can decide a computation should be treated as an error from then on).</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>const betterValue = pipe(
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>const betterValue = pipe(
   goodValue,
   E.map(value =&gt; `${value} is now 'better'`)
 ); // this is a changed 'right'
@@ -142,9 +144,9 @@ const worseValue = pipe(
 
 <h2 id="working-with-eithers-when-we-have-lefts">Working with Eithers when we have Lefts</h2>
 
-<p>We can modify the error using <code class="highlighter-rouge">mapLeft</code>:</p>
+<p>We can modify the error using <code class="language-plaintext highlighter-rouge">mapLeft</code>:</p>
 
-<div class="language-typescript highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">const</span> <span class="nx">crypticError</span><span class="p">:</span> <span class="nx">Either</span><span class="o">&lt;</span><span class="nx">number</span><span class="p">,</span> <span class="nx">string</span><span class="o">&gt;</span> <span class="o">=</span> <span class="nx">pipe</span><span class="p">(</span>
+<div class="language-typescript highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">const</span> <span class="nx">crypticError</span><span class="p">:</span> <span class="nx">Either</span><span class="o">&lt;</span><span class="kr">number</span><span class="p">,</span> <span class="kr">string</span><span class="o">&gt;</span> <span class="o">=</span> <span class="nx">pipe</span><span class="p">(</span>
   <span class="nx">worseValue</span><span class="p">,</span>
   <span class="nx">E</span><span class="p">.</span><span class="nx">mapLeft</span><span class="p">((</span><span class="nx">err</span><span class="p">)</span> <span class="o">=&gt;</span> <span class="nx">err</span><span class="p">.</span><span class="nx">message</span><span class="p">.</span><span class="nx">length</span><span class="p">)</span>
 <span class="p">);</span>
@@ -154,7 +156,7 @@ const worseValue = pipe(
 
 <div class="language-typescript highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">const</span> <span class="nx">improvedValue</span> <span class="o">=</span> <span class="nx">pipe</span><span class="p">(</span>
   <span class="nx">worseValue</span><span class="p">,</span>
-  <span class="nx">E</span><span class="p">.</span><span class="nx">alt</span><span class="p">(()</span> <span class="o">=&gt;</span> <span class="nx">E</span><span class="p">.</span><span class="nx">right</span><span class="p">(</span><span class="s2">"Back to 2015"</span><span class="p">))</span>
+  <span class="nx">E</span><span class="p">.</span><span class="nx">alt</span><span class="p">(()</span> <span class="o">=&gt;</span> <span class="nx">E</span><span class="p">.</span><span class="nx">right</span><span class="p">(</span><span class="dl">"</span><span class="s2">Back to 2015</span><span class="dl">"</span><span class="p">))</span>
 <span class="p">);</span>
 </code></pre></div></div>
 
@@ -166,19 +168,19 @@ const worseValue = pipe(
 <span class="p">);</span>
 </code></pre></div></div>
 
-<p>Note: we don’t necessarily have to provide a <code class="highlighter-rouge">right</code>. We can map an error to another error, for instance.</p>
+<p>Note: we don’t necessarily have to provide a <code class="language-plaintext highlighter-rouge">right</code>. We can map an error to another error, for instance.</p>
 
 <h2 id="working-with-existing-code-that-might-throw-exceptions">Working with existing code that might throw exceptions</h2>
 
-<p>TypeScript operates under the rules of JavaScript, and our application will inevitably integrate with third-party code that creates exceptions. We could use <code class="highlighter-rouge">try...catch</code> and do our own wrapping, but <code class="highlighter-rouge">Either.tryCatch</code> already takes care of that pattern for us:</p>
+<p>TypeScript operates under the rules of JavaScript, and our application will inevitably integrate with third-party code that creates exceptions. We could use <code class="language-plaintext highlighter-rouge">try...catch</code> and do our own wrapping, but <code class="language-plaintext highlighter-rouge">Either.tryCatch</code> already takes care of that pattern for us:</p>
 
-<div class="language-typescript highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">const</span> <span class="nx">safeParseJson</span> <span class="o">=</span> <span class="p">(</span><span class="nx">str</span><span class="p">:</span> <span class="nx">string</span><span class="p">):</span> <span class="nx">Either</span><span class="o">&lt;</span><span class="nb">Error</span><span class="p">,</span> <span class="nx">unknown</span><span class="o">&gt;</span> <span class="o">=&gt;</span>
+<div class="language-typescript highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">const</span> <span class="nx">safeParseJson</span> <span class="o">=</span> <span class="p">(</span><span class="nx">str</span><span class="p">:</span> <span class="kr">string</span><span class="p">):</span> <span class="nx">Either</span><span class="o">&lt;</span><span class="nb">Error</span><span class="p">,</span> <span class="nx">unknown</span><span class="o">&gt;</span> <span class="o">=&gt;</span>
   <span class="nx">E</span><span class="p">.</span><span class="nx">tryCatch</span><span class="o">&lt;</span><span class="nb">Error</span><span class="p">,</span> <span class="nx">unknown</span><span class="o">&gt;</span><span class="p">(</span>
     <span class="p">()</span> <span class="o">=&gt;</span> <span class="nx">JSON</span><span class="p">.</span><span class="nx">parse</span><span class="p">(</span><span class="nx">str</span><span class="p">),</span>
-    <span class="p">(</span><span class="nx">err</span><span class="p">)</span> <span class="o">=&gt;</span> <span class="p">(</span><span class="nx">err</span> <span class="k">instanceof</span> <span class="nb">Error</span> <span class="p">?</span> <span class="nx">err</span> <span class="p">:</span> <span class="nb">Error</span><span class="p">(</span><span class="s2">"unexpected error when parsing json"</span><span class="p">))</span>
+    <span class="p">(</span><span class="nx">err</span><span class="p">)</span> <span class="o">=&gt;</span> <span class="p">(</span><span class="nx">err</span> <span class="k">instanceof</span> <span class="nb">Error</span> <span class="p">?</span> <span class="nx">err</span> <span class="p">:</span> <span class="nb">Error</span><span class="p">(</span><span class="dl">"</span><span class="s2">unexpected error when parsing json</span><span class="dl">"</span><span class="p">))</span>
   <span class="p">);</span>
 
-<span class="kd">const</span> <span class="nx">yayJson</span> <span class="o">=</span> <span class="nx">safeParseJson</span><span class="p">(</span><span class="s2">"}"</span><span class="p">);</span>
+<span class="kd">const</span> <span class="nx">yayJson</span> <span class="o">=</span> <span class="nx">safeParseJson</span><span class="p">(</span><span class="dl">"</span><span class="s2">}</span><span class="dl">"</span><span class="p">);</span>
 </code></pre></div></div>
 
 <h2 id="taking-things-out-of-eithers">Taking things out of Eithers</h2>
@@ -204,7 +206,7 @@ const worseValue = pipe(
 
 <h3 id="getorelse">getOrElse</h3>
 
-<p><code class="highlighter-rouge">getOrElse</code> requires us to define a way to build an <code class="highlighter-rouge">A</code> from an <code class="highlighter-rouge">E</code>:</p>
+<p><code class="language-plaintext highlighter-rouge">getOrElse</code> requires us to define a way to build an <code class="language-plaintext highlighter-rouge">A</code> from an <code class="language-plaintext highlighter-rouge">E</code>:</p>
 
 <div class="language-typescript highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">const</span> <span class="nx">mehValue</span> <span class="o">=</span> <span class="nx">pipe</span><span class="p">(</span>
   <span class="nx">worseValue</span><span class="p">,</span>
@@ -214,7 +216,7 @@ const worseValue = pipe(
 
 <h3 id="fold">fold</h3>
 
-<p><code class="highlighter-rouge">fold</code> requires us to provide mappings from <code class="highlighter-rouge">E</code> and <code class="highlighter-rouge">A</code> to a common type <code class="highlighter-rouge">B</code>:</p>
+<p><code class="language-plaintext highlighter-rouge">fold</code> requires us to provide mappings from <code class="language-plaintext highlighter-rouge">E</code> and <code class="language-plaintext highlighter-rouge">A</code> to a common type <code class="language-plaintext highlighter-rouge">B</code>:</p>
 
 <div class="language-typescript highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">const</span> <span class="nx">answer</span> <span class="o">=</span> <span class="nx">pipe</span><span class="p">(</span>
   <span class="nx">improvedValue</span><span class="p">,</span>
@@ -225,23 +227,23 @@ const worseValue = pipe(
 <span class="p">);</span>
 </code></pre></div></div>
 
-<p><code class="highlighter-rouge">fold</code> is more powerful than <code class="highlighter-rouge">getOrElse</code>, because you can perform transformations (i.e. <code class="highlighter-rouge">getOrElse</code> requires you to provide a value of the same type <code class="highlighter-rouge">A</code> as in the <code class="highlighter-rouge">Either</code>, while <code class="highlighter-rouge">fold</code> allows you to return a <code class="highlighter-rouge">B</code>).</p>
+<p><code class="language-plaintext highlighter-rouge">fold</code> is more powerful than <code class="language-plaintext highlighter-rouge">getOrElse</code>, because you can perform transformations (i.e. <code class="language-plaintext highlighter-rouge">getOrElse</code> requires you to provide a value of the same type <code class="language-plaintext highlighter-rouge">A</code> as in the <code class="language-plaintext highlighter-rouge">Either</code>, while <code class="language-plaintext highlighter-rouge">fold</code> allows you to return a <code class="language-plaintext highlighter-rouge">B</code>).</p>
 
 <h1 id="variations-defined-in-the-library">Variations <a href="https://gcanti.github.io/fp-ts/modules/">defined in the library</a>:</h1>
 
 <p>Either is useful in other contexts — when performing IO, when performing async computations, when performing computations within a context/environment, when performing async computations within a context/environment, et cetera —, and fp-ts ships with a few different monad stacks that include it:</p>
 
 <ul>
-  <li><code class="highlighter-rouge">IOEither&lt;E, A&gt;</code></li>
-  <li><code class="highlighter-rouge">TaskEither&lt;E, A&gt;</code></li>
-  <li><code class="highlighter-rouge">ReaderEither&lt;E, A&gt;</code></li>
-  <li><code class="highlighter-rouge">ReaderTaskEither&lt;R, E, A&gt;</code></li>
-  <li><code class="highlighter-rouge">StateReaderTaskEither&lt;S, R, E, A&gt;</code></li>
+  <li><code class="language-plaintext highlighter-rouge">IOEither&lt;E, A&gt;</code></li>
+  <li><code class="language-plaintext highlighter-rouge">TaskEither&lt;E, A&gt;</code></li>
+  <li><code class="language-plaintext highlighter-rouge">ReaderEither&lt;E, A&gt;</code></li>
+  <li><code class="language-plaintext highlighter-rouge">ReaderTaskEither&lt;R, E, A&gt;</code></li>
+  <li><code class="language-plaintext highlighter-rouge">StateReaderTaskEither&lt;S, R, E, A&gt;</code></li>
 </ul>
 
 <h1 id="coming-soon-in-blogs-code-for-this-is-the-last-post-for-a-while">Coming soon (in blogs, code for “this is the last post for a while”)</h1>
 
-<p>In part 2, we’ll talk about calling functions when you have more than one <code class="highlighter-rouge">Either</code>, accumulating errors (instead of short-circuiting), pulling things inside-out, and writing confident and expressive code using <code class="highlighter-rouge">Either</code>. Stay tuned.</p>
+<p>In part 2, we’ll talk about calling functions when you have more than one <code class="language-plaintext highlighter-rouge">Either</code>, accumulating errors (instead of short-circuiting), pulling things inside-out, and writing confident and expressive code using <code class="language-plaintext highlighter-rouge">Either</code>. Stay tuned.</p>
 
 
   </div><a class="u-url" href="/blog/2020/09/24/fp-ts-error-handling-the-functional-way/" hidden></a>
