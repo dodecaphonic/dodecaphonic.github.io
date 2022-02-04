@@ -1,4 +1,163 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="3.8.5">Jekyll</generator><link href="http://troikatech.com/feed.xml" rel="self" type="application/atom+xml" /><link href="http://troikatech.com/" rel="alternate" type="text/html" /><updated>2022-02-03T20:49:03-03:00</updated><id>http://troikatech.com/feed.xml</id><title type="html">Troika Tech</title><subtitle>Ruby and JS in the streets, Haskell and friends between the sheets.</subtitle><entry><title type="html">fp-ts overview: Error handling, the functional way (part 1)</title><link href="http://troikatech.com/blog/2020/09/24/fp-ts-error-handling-the-functional-way/" rel="alternate" type="text/html" title="fp-ts overview: Error handling, the functional way (part 1)" /><published>2020-09-24T10:15:00-03:00</published><updated>2020-09-24T10:15:00-03:00</updated><id>http://troikatech.com/blog/2020/09/24/fp-ts-error-handling-the-functional-way</id><content type="html" xml:base="http://troikatech.com/blog/2020/09/24/fp-ts-error-handling-the-functional-way/">&lt;p&gt;In most codebases, error-handling means &lt;em&gt;exceptions&lt;/em&gt;. A team will carefully considering potential problems, then create sets of exceptions by extending some error class that will be used to signify something in the application domain went wrong.&lt;/p&gt;
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="3.8.5">Jekyll</generator><link href="http://troikatech.com/feed.xml" rel="self" type="application/atom+xml" /><link href="http://troikatech.com/" rel="alternate" type="text/html" /><updated>2022-02-04T19:33:28-03:00</updated><id>http://troikatech.com/feed.xml</id><title type="html">Troika Tech</title><subtitle>Ruby and JS in the streets, Haskell and friends between the sheets.</subtitle><entry><title type="html">Confident Ruby in the presence of nil</title><link href="http://troikatech.com/blog/2022/02/02/confident-ruby-in-the-presence-of-nil/" rel="alternate" type="text/html" title="Confident Ruby in the presence of nil" /><published>2022-02-02T12:34:00-03:00</published><updated>2022-02-02T12:34:00-03:00</updated><id>http://troikatech.com/blog/2022/02/02/confident-ruby-in-the-presence-of-nil</id><content type="html" xml:base="http://troikatech.com/blog/2022/02/02/confident-ruby-in-the-presence-of-nil/">&lt;p&gt;When people talk about working with Ruby, the usual &lt;em&gt;spiel&lt;/em&gt; is that it’s about joy, humans at the center, &lt;a href=&quot;https://www.wordsense.eu/MINASWAN/&quot;&gt;MINASWAN&lt;/a&gt;, kittens and all that sparkles. The role of anxiety in our day to day is rarely addressed. Or rather, of one specific anxiety: will I get a &lt;code class=&quot;highlighter-rouge&quot;&gt;NoMethodError&lt;/code&gt; because I have an unexpected &lt;code class=&quot;highlighter-rouge&quot;&gt;nil&lt;/code&gt;?&lt;/p&gt;
+
+&lt;p&gt;Think about it. If you ask an Array for a value that’s not there, you get &lt;code class=&quot;highlighter-rouge&quot;&gt;nil&lt;/code&gt;. If you call a method that produces a side-effect, you often get a &lt;code class=&quot;highlighter-rouge&quot;&gt;nil&lt;/code&gt;. If you call another method that stops when a precondition is not met, it might return &lt;code class=&quot;highlighter-rouge&quot;&gt;nil&lt;/code&gt;. Even writing this list made me sweat a little.&lt;/p&gt;
+
+&lt;p&gt;That fact often leads to patterns like:&lt;/p&gt;
+
+&lt;div class=&quot;language-ruby highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;n&quot;&gt;do_something&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;something&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;x&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;y&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;z&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;foo&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;bar&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;?&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;bar&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;size&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;We get used to it, but it’s hardly the most fluent or confident way to write code. Consider the following:&lt;/p&gt;
+
+&lt;div class=&quot;language-ruby highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;rejigger_oldest_widget&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;widgets&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;max_age_years&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+  &lt;span class=&quot;n&quot;&gt;oldest_widget&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;widgets&lt;/span&gt;
+                  &lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;select&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;amp;&lt;/span&gt;&lt;span class=&quot;ss&quot;&gt;:working?&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+                  &lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;find&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;_1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;age_in_years&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;lt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;max_age_years&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+
+  &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;oldest_widget&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;oldest_widget&lt;/span&gt;
+      &lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;rejigger&lt;/span&gt; 
+      &lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;shuffle&lt;/span&gt;
+      &lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;shine&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;It’s not awful, but it’s hardly great. What if &lt;code class=&quot;highlighter-rouge&quot;&gt;rejigger&lt;/code&gt;, &lt;code class=&quot;highlighter-rouge&quot;&gt;shuffle&lt;/code&gt; or &lt;code class=&quot;highlighter-rouge&quot;&gt;shine&lt;/code&gt; also return &lt;code class=&quot;highlighter-rouge&quot;&gt;nil&lt;/code&gt; on occasion? Or worse, what if they &lt;em&gt;all&lt;/em&gt; might produce one? Do we despair?&lt;/p&gt;
+
+&lt;h2 id=&quot;our-knight-in-shiny-armor&quot;&gt;Our knight in shiny armor&lt;/h2&gt;
+
+&lt;p&gt;Like with many other languages, the solution Ruby (since 2.3) has found for this problem is the safe navigation operator, represented by &lt;code class=&quot;highlighter-rouge&quot;&gt;&amp;amp;.&lt;/code&gt;. It’s neither only &lt;code class=&quot;highlighter-rouge&quot;&gt;&amp;amp;&lt;/code&gt; nor simply &lt;code class=&quot;highlighter-rouge&quot;&gt;.&lt;/code&gt;, but &lt;code class=&quot;highlighter-rouge&quot;&gt;&amp;amp;.&lt;/code&gt;, a fine unit that allows us to change &lt;code class=&quot;highlighter-rouge&quot;&gt;rejigger_oldest_widget&lt;/code&gt; to the following:&lt;/p&gt;
+
+&lt;div class=&quot;language-ruby highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;rejigger_oldest_widget&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;widgets&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;max_age_years&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+  &lt;span class=&quot;n&quot;&gt;widgets&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;select&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;amp;&lt;/span&gt;&lt;span class=&quot;ss&quot;&gt;:working?&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;find&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;_1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;age_in_years&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;lt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;max_age_years&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+    &lt;span class=&quot;o&quot;&gt;&amp;amp;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;rejigger&lt;/span&gt;
+    &lt;span class=&quot;o&quot;&gt;&amp;amp;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;shuffle&lt;/span&gt;
+    &lt;span class=&quot;o&quot;&gt;&amp;amp;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;shine&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;Since &lt;code class=&quot;highlighter-rouge&quot;&gt;Enumerable#find&lt;/code&gt; might return a &lt;code class=&quot;highlighter-rouge&quot;&gt;nil&lt;/code&gt;, &lt;code class=&quot;highlighter-rouge&quot;&gt;rejigger&lt;/code&gt; will only be called when it returns a value. If it doesn’t, the entire chain is halted and &lt;code class=&quot;highlighter-rouge&quot;&gt;rejigger_oldest_widget&lt;/code&gt; returns &lt;code class=&quot;highlighter-rouge&quot;&gt;nil&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;Conveniently, it works with anything that could be called as a method, no matter the receiver (even &lt;code class=&quot;highlighter-rouge&quot;&gt;nil&lt;/code&gt;). Say you had the following:&lt;/p&gt;
+
+&lt;div class=&quot;language-ruby highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;ruffle_feathers&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;random_joe&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;feathers&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;random_joe&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;feathers&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;).&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;nil?&lt;/span&gt;
+
+  &lt;span class=&quot;n&quot;&gt;ruffled_feathers&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;annoyobot&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;ruffle_feathers&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;feathers&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+  &lt;span class=&quot;n&quot;&gt;annoyometer&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;measure&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ruffled_feathers&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;You could easily write that as:&lt;/p&gt;
+
+&lt;div class=&quot;language-ruby highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;ruffle_feathers&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;bird&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+  &lt;span class=&quot;n&quot;&gt;random_joe&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;feathers&lt;/span&gt;
+    &lt;span class=&quot;o&quot;&gt;&amp;amp;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;then&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;annoyobot&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;ruffle_feathers&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;_1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+    &lt;span class=&quot;o&quot;&gt;&amp;amp;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;then&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;annoyometer&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;measure&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;_1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;I personally tend to favor this style. I don’t actually care about &lt;code class=&quot;highlighter-rouge&quot;&gt;ruffled_feathers&lt;/code&gt; other than as an argument to &lt;code class=&quot;highlighter-rouge&quot;&gt;measure&lt;/code&gt;. This makes that more evident (i.e. we want to go from a &lt;code class=&quot;highlighter-rouge&quot;&gt;random_joe&lt;/code&gt; whose &lt;code class=&quot;highlighter-rouge&quot;&gt;feathers&lt;/code&gt; can be ruffled to how ruffled their feathers were).&lt;/p&gt;
+
+&lt;h2 id=&quot;maybe-we-can-discuss-more&quot;&gt;&lt;em&gt;Maybe&lt;/em&gt; we can discuss more&lt;/h2&gt;
+
+&lt;p&gt;If you’re familiar with functional languages in the ML family, you’re probably making the connection I (and &lt;a href=&quot;https://github.com/raganwald/andand&quot;&gt;many&lt;/a&gt; &lt;a href=&quot;https://dry-rb.org/gems/dry-monads/1.0/&quot;&gt;others&lt;/a&gt;) have made: this is a lot like using the Maybe/Option monad. &lt;code class=&quot;highlighter-rouge&quot;&gt;&amp;amp;.&lt;/code&gt; is like &lt;code class=&quot;highlighter-rouge&quot;&gt;map&lt;/code&gt;/&lt;code class=&quot;highlighter-rouge&quot;&gt;fmap&lt;/code&gt;, and you can have the short-circuiting capabilities of &lt;code class=&quot;highlighter-rouge&quot;&gt;flatMap&lt;/code&gt;/&lt;code class=&quot;highlighter-rouge&quot;&gt;bind&lt;/code&gt; by producing a &lt;code class=&quot;highlighter-rouge&quot;&gt;nil&lt;/code&gt; at any step of your computation.&lt;/p&gt;
+
+&lt;p&gt;Some comment to that effect can be found in reference to any language with a safe navigation operator — often with a verdict like &lt;em&gt;“this is a hack”&lt;/em&gt;, or &lt;em&gt;“this is not as good as having a Monad”&lt;/em&gt;. And they’re not wrong! If you learn how Functors, Applicatives and Monads work and what they make possible, you’ll probably be a little disappointed with how little &lt;code class=&quot;highlighter-rouge&quot;&gt;&amp;amp;.&lt;/code&gt; accomplishes.&lt;/p&gt;
+
+&lt;p&gt;However, when terms like “monads”, “laws”, and “categories” show up in conversation, they mean a lot to the initiated and next to nothing to programmers with other backgrounds. Why do Haskell snobs poo-poo something which looks so useful?&lt;/p&gt;
+
+&lt;p&gt;Since this is not a post about the narcissism of minor differences (nor about anti-intellectual statements like the one this comment parenthesizes), let’s focus on a practical scenario you can’t conveniently handle with &lt;code class=&quot;highlighter-rouge&quot;&gt;&amp;amp;.&lt;/code&gt; alone.&lt;/p&gt;
+
+&lt;h2 id=&quot;too-many-nils&quot;&gt;Too many nils&lt;/h2&gt;
+
+&lt;p&gt;Sometimes you need to perform a computation with two or more values, and none of them can be &lt;code class=&quot;highlighter-rouge&quot;&gt;nil&lt;/code&gt;. If any are &lt;code class=&quot;highlighter-rouge&quot;&gt;nil&lt;/code&gt;, the computation also produces &lt;code class=&quot;highlighter-rouge&quot;&gt;nil&lt;/code&gt;. So you write something like this:&lt;/p&gt;
+
+&lt;div class=&quot;language-ruby highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;fix_global_warming&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;committed_nations&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ethical_companies&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;conscientious_citizens&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;unless&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;committed_nations&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;amp;&amp;amp;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ethical_companies&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;amp;&amp;amp;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;conscientious_citizens&lt;/span&gt;
+  
+  &lt;span class=&quot;n&quot;&gt;fix_it!&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;committed_nations&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ethical_companies&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;conscientious_citizens&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;But what you really want is something as declarative as chaining with &lt;code class=&quot;highlighter-rouge&quot;&gt;&amp;amp;.&lt;/code&gt;. “So why not &lt;code class=&quot;highlighter-rouge&quot;&gt;&amp;amp;.&lt;/code&gt;?”, you think, ending up with:&lt;/p&gt;
+
+&lt;div class=&quot;language-ruby highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;fix_global_warming&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;committed_nations&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ethical_companies&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;conscientious_citizens&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+  &lt;span class=&quot;n&quot;&gt;committed_nations&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;amp;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;then&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;do&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;nations&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;|&lt;/span&gt; 
+    &lt;span class=&quot;n&quot;&gt;ethical_companies&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;amp;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;then&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;do&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;companies&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;|&lt;/span&gt; 
+      &lt;span class=&quot;n&quot;&gt;conscientious_citizens&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;amp;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;then&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;do&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;citizens&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;|&lt;/span&gt; 
+        &lt;span class=&quot;n&quot;&gt;fix_it!&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;nations&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;companies&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;citizens&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; 
+      &lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;It completely hides what the method actually does, and you might have trouble understanding that this is all for checking for the presence of values. The guard clause in the original version is &lt;em&gt;definitely&lt;/em&gt; better.&lt;/p&gt;
+
+&lt;p&gt;How does Haskell solve this? After all, if writing code in that language were anything like the sample above, people wouldn’t think it’s so great. Fortunately, there are a few ways to make it nicer. We’ll go over some of them.&lt;/p&gt;
+
+&lt;p&gt;The first requires special syntax called &lt;a href=&quot;https://en.m.wikibooks.org/wiki/Haskell/do_notation&quot;&gt;“Do notation”&lt;/a&gt;:&lt;/p&gt;
+
+&lt;div class=&quot;language-haskell highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;c1&quot;&gt;-- Starting with something like the Ruby code above&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;fixGlobalWarming&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;::&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Maybe&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;ComittedNations&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Maybe&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;EthicalCompanies&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Maybe&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;ConscientiousCitizens&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Maybe&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;BetterPlanet&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;fixGlobalWarming&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;committedNations&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ethicalCompanies&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;conscientiousCitizens&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; 
+  &lt;span class=&quot;n&quot;&gt;comittedNations&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;gt;&amp;gt;=&lt;/span&gt; 
+    &lt;span class=&quot;nf&quot;&gt;\&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;nations&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ethicalCompanies&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;gt;&amp;gt;=&lt;/span&gt;
+      &lt;span class=&quot;nf&quot;&gt;\&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;companies&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;conscientiousCitizens&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;lt;&amp;amp;&amp;gt;&lt;/span&gt;
+        &lt;span class=&quot;nf&quot;&gt;\&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;citizens&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;pure&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;fixIt&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;nations&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;companies&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;citizens&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+      
+&lt;span class=&quot;c1&quot;&gt;-- A version with do notation&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;fixGlobalWarming&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;committedNations&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ethicalCompanies&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;conscientiousCitizens&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;kr&quot;&gt;do&lt;/span&gt;
+  &lt;span class=&quot;n&quot;&gt;nations&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;lt;-&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;committedNations&lt;/span&gt;
+  &lt;span class=&quot;n&quot;&gt;companies&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;lt;-&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ethicalCompanies&lt;/span&gt;
+  &lt;span class=&quot;n&quot;&gt;citizens&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;lt;-&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;conscientiousCitizens&lt;/span&gt;
+  
+  &lt;span class=&quot;n&quot;&gt;pure&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;fixIt&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;nations&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;companies&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;citizens&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;Since it’s syntax, we can only approximate it (&lt;a href=&quot;https://dry-rb.org/gems/dry-monads/1.0/&quot;&gt;dry-monads&lt;/a&gt; has its take), and doing so requires a bit of infrastructure. However, there are two other options: relying on it being an &lt;code class=&quot;highlighter-rouge&quot;&gt;Applicative Functor&lt;/code&gt; or using a combinator to sweep the dirt under the rug:&lt;/p&gt;
+
+&lt;div class=&quot;language-haskell highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;c1&quot;&gt;-- As an Applicative Functor&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;fixGlobalWarming&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;committedNations&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ethicalCompanies&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;conscientiousCitizens&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;
+  &lt;span class=&quot;n&quot;&gt;fixIt&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;lt;$&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;committedNations&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;lt;*&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ethicalCompanies&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;lt;*&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;conscientiousCitizens&lt;/span&gt;
+  
+&lt;span class=&quot;c1&quot;&gt;-- With a combinator&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;fixGlobalWarming&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;liftM3&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;fixIt&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;The Applicative version would never fit in Ruby exactly at is (though it’s awesome!). The one that can impact us the most is &lt;code class=&quot;highlighter-rouge&quot;&gt;liftM3&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;According to its documentation, what it does is “promote a function to a monad”. That means that you can take any function that takes three values and make it work with values in any monad, including Maybe. As you can guess, Haskell needs a &lt;code class=&quot;highlighter-rouge&quot;&gt;liftM2&lt;/code&gt;, as well as a &lt;code class=&quot;highlighter-rouge&quot;&gt;liftM4&lt;/code&gt;, and so on.&lt;/p&gt;
+
+&lt;p&gt;Since we don’t have to differentiate their types, we can define a similar combinator that allows us to work on any number of arguments:&lt;/p&gt;
+
+&lt;div class=&quot;language-ruby highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;with_all_present&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;values&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;yield&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;values&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;values&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;none?&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;amp;&lt;/span&gt;&lt;span class=&quot;ss&quot;&gt;:nil?&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;Which gives us a way to rewrite &lt;code class=&quot;highlighter-rouge&quot;&gt;fix_global_warming&lt;/code&gt; as follows:&lt;/p&gt;
+
+&lt;div class=&quot;language-ruby highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;fix_global_warming&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;committed_nations&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ethical_companies&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;conscientious_citizens&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+  &lt;span class=&quot;n&quot;&gt;with_all_present&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;committed_nations&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ethical_companies&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;conscientious_citizens&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;do&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;fix_it&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;_1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;_2&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;_3&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h2 id=&quot;is-it-actually-better&quot;&gt;Is it actually better?&lt;/h2&gt;
+
+&lt;p&gt;As programmers, we’re always trying to find a good balance between terseness and readability. It’s easy to go too far, and each individual cares about different things. Knowing that, it would be foolish to be assertive about any technique.&lt;/p&gt;
+
+&lt;p&gt;In my book, both &lt;code class=&quot;highlighter-rouge&quot;&gt;&amp;amp;.&lt;/code&gt; and custom combinators give us tools to end up with code that is more confident and expressive, unmarred by the fear of &lt;code class=&quot;highlighter-rouge&quot;&gt;nil&lt;/code&gt;. They’re great steps in the direction of robustness. And even if it’s true that neither will kill every &lt;code class=&quot;highlighter-rouge&quot;&gt;NoMethodError&lt;/code&gt;, they’ll go a long way.&lt;/p&gt;</content><author><name></name></author><category term="haskell" /><category term="functional" /><category term="functionalprogramming" /><category term="ruby" /><category term="maybe" /><summary type="html">When people talk about working with Ruby, the usual spiel is that it’s about joy, humans at the center, MINASWAN, kittens and all that sparkles. The role of anxiety in our day to day is rarely addressed. Or rather, of one specific anxiety: will I get a NoMethodError because I have an unexpected nil?</summary></entry><entry><title type="html">fp-ts overview: Error handling, the functional way (part 1)</title><link href="http://troikatech.com/blog/2020/09/24/fp-ts-error-handling-the-functional-way/" rel="alternate" type="text/html" title="fp-ts overview: Error handling, the functional way (part 1)" /><published>2020-09-24T10:15:00-03:00</published><updated>2020-09-24T10:15:00-03:00</updated><id>http://troikatech.com/blog/2020/09/24/fp-ts-error-handling-the-functional-way</id><content type="html" xml:base="http://troikatech.com/blog/2020/09/24/fp-ts-error-handling-the-functional-way/">&lt;p&gt;In most codebases, error-handling means &lt;em&gt;exceptions&lt;/em&gt;. A team will carefully considering potential problems, then create sets of exceptions by extending some error class that will be used to signify something in the application domain went wrong.&lt;/p&gt;
 
 &lt;p&gt;The fact exceptions can come from deep within the call stack and bubble up very far from their point of origin often makes debugging them hard. They also affect code reuse, as every path that includes exception-throwing code also becomes exceptional — a fact that is usually hidden and forces (careful and caring) developers to perpetually keep documentation up-to-date at every level of the affected call stack to avoid surprising behavior.&lt;/p&gt;
 
@@ -1276,80 +1435,4 @@ Finished in 0.099329s, 60.4053 runs/s, 3120.9415 assertions/s.
 &lt;iframe width=&quot;560&quot; height=&quot;315&quot; src=&quot;//www.youtube.com/embed/0t0BlDdWQQY&quot; frameborder=&quot;0&quot; allowfullscreen=&quot;&quot;&gt;&lt;/iframe&gt;
 &lt;iframe width=&quot;560&quot; height=&quot;315&quot; src=&quot;//www.youtube.com/embed/_y6KbkqklkQ&quot; frameborder=&quot;0&quot; allowfullscreen=&quot;&quot;&gt;&lt;/iframe&gt;
 
-&lt;p&gt;Por fim apresentei um projetinho que fiz especialmente para o encontro, o &lt;a href=&quot;https://github.com/dodecaphonic/balladina-ruby&quot;&gt;Balladina&lt;/a&gt;. Foi divertido fazê-lo, e aprendi bastante coisa sobre o Celluloid no processo. Pude também contrastar algumas coisas com a parca experiência que tive com o Akka no &lt;a href=&quot;/blog/2014/01/12/reactive/&quot;&gt;curso do Coursera&lt;/a&gt;, e a maturidade do Celluloid relativa à do Akka me deixou esperançoso de um futuro bacana no Ruby. Vamos torcer pelo melhor.&lt;/p&gt;</content><author><name></name></author><category term="ruby" /><category term="celluloid" /><category term="actors" /><category term="akka" /><category term="erlang" /><summary type="html">No dia 15 de março de 2014, aproveitei o encontro do RubyOnRio para falar sobre Celluloid, uma implementação do Actor Model para Ruby. Como programação reativa, concorrência, paralelismo e quetais têm ocupado minha mente nos últimos meses, achei por bem conversar com o pessoal sobre como isso é relevante para o futuro do desenvolvimento de software e para o Ruby em si, constantemente sob ameaça (se Hacker News for parâmetro) de ser soterrado por uma tecnologia mais antenada com os novos tempos.</summary></entry><entry><title type="html">WebSockets in Ruby</title><link href="http://troikatech.com/blog/2014/02/26/websocket-webmachine/" rel="alternate" type="text/html" title="WebSockets in Ruby" /><published>2014-02-26T09:03:00-03:00</published><updated>2014-02-26T09:03:00-03:00</updated><id>http://troikatech.com/blog/2014/02/26/websocket-webmachine</id><content type="html" xml:base="http://troikatech.com/blog/2014/02/26/websocket-webmachine/">&lt;p&gt;At my main job, we have a large datastructure that takes considerable CPU time to be built, but remains unchanged thereafter. Its job is to geocode positions to and from a local reference system, which in turn provides us the ability to pin records, for instance, to a place on a Road, and know to which coordinate pair a local reference would correspond.&lt;/p&gt;
-
-&lt;p&gt;For the first pass, I built the Ruby library for the geocoding and a simple (Sinatra-based) webservice. This worked fine for a while until the Client required that &lt;strong&gt;every&lt;/strong&gt; mouse move performed a conversion. Said change, prompted me to build the same geocoding infrastructure again in JavaScript, and all were happy for a while.&lt;/p&gt;
-
-&lt;p&gt;As it usually goes, a new decision was made to support multiple Roads per User. Now, a download of 800KB of data (stored in an IndexedDB for later sessions) was tolerable; potentially multiple megabytes would be deadly, even if the software could be used before that constant feedback of conversions was given — it just became one of those features Users hold on to.&lt;/p&gt;
-
-&lt;p&gt;I knew that we had to go for a solution that kept that intact and made the whole thing manageable. I had dabbled in WebSockets before (with &lt;a href=&quot;http://nodejs.org&quot;&gt;node.js&lt;/a&gt; and &lt;a href=&quot;http://socket.io/&quot;&gt;Socket.IO&lt;/a&gt;) and kind of knew the lay of the land. Still, from previous searches, I was also aware there was a dearth of Ruby solutions, and for a moment considered going with my JavaScript port on node. The thought gave me shivers.&lt;/p&gt;
-
-&lt;h2 id=&quot;the-contenders&quot;&gt;The contenders&lt;/h2&gt;
-
-&lt;p&gt;The first step was finding out what could be used. This is what I evaluated:&lt;/p&gt;
-
-&lt;ul&gt;
-  &lt;li&gt;&lt;a href=&quot;https://github.com/simulacre/sinatra-websocket&quot;&gt;sinatra-websocket&lt;/a&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;a href=&quot;https://github.com/faye/faye-websocket-ruby&quot;&gt;faye-websocket&lt;/a&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;a href=&quot;https://github.com/websocket-rails/websocket-rails&quot;&gt;websocket-rails&lt;/a&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;a href=&quot;https://github.com/ngauthier/tubesock&quot;&gt;tubesock&lt;/a&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;a href=&quot;https://github.com/seancribbs/webmachine-ruby&quot;&gt;webmachine-ruby&lt;/a&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;The first three are EventMachine-based; &lt;em&gt;tubesock&lt;/em&gt; uses &lt;a href=&quot;http://blog.phusion.nl/2013/01/23/the-new-rack-socket-hijacking-api/&quot;&gt;rack hijacking&lt;/a&gt;; &lt;em&gt;webmachine-ruby&lt;/em&gt; provides WebSockets via &lt;a href=&quot;https://github.com/celluloid/reel&quot;&gt;Reel&lt;/a&gt;, a Celluloid::IO-based HTTP server.&lt;/p&gt;
-
-&lt;p&gt;At first, considering I was already using Sinatra, I tried &lt;em&gt;sinatra-websocket&lt;/em&gt;. For some reason I just couldn’t get the connection to be upgraded to a WebSocket, and decided to move on quickly. &lt;em&gt;faye-websocket&lt;/em&gt; I just skipped, to be frank.&lt;/p&gt;
-
-&lt;p&gt;The next two suffered from the same problem: after booting Rails and loading the structure, I was left with only enough memory for a couple dozen or so clients on a small Heroku dyno. Also, Rails’ boot time coupled with building the thing occasionally made Heroku think something had gone wrong, and often the process crashed before the service went up.&lt;/p&gt;
-
-&lt;p&gt;The only one left, if you’re counting, was &lt;em&gt;webmachine-ruby&lt;/em&gt;.&lt;/p&gt;
-
-&lt;h2 id=&quot;webmachine-ruby&quot;&gt;webmachine-ruby&lt;/h2&gt;
-
-&lt;p&gt;Setting up was relatively easy. To ramp up, I first migrated the original HTTP-based service to its resource structure. It has more of an OO flair than both Rails and Sinatra, with the caveat that it provides a lot less (by design). The dispatcher is easy to understand, and I quite enjoyed toying with the &lt;a href=&quot;https://github.com/seancribbs/webmachine-ruby#visual-debugger&quot;&gt;visual debugger&lt;/a&gt;.&lt;/p&gt;
-
-&lt;p&gt;Moving to a WebSocket, however, changes everything. As far as I can tell (and the documentation specifies) you completely skip over the regular infrastructure by providing a &lt;em&gt;callable&lt;/em&gt; to a configuration option, as such:&lt;/p&gt;
-
-&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;App = Webmachine::Application do |app|
-  app.configure do |config|
-    config.adapter = :Reel
-    config.adapter_options[:websocket_handler] = proc do |websocket|
-      websocket &amp;lt;&amp;lt; &quot;hello, world&quot;
-    end
-  end
-end
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;That is pretty much what the docs say. Since it only expects the handler to respond to &lt;em&gt;#call&lt;/em&gt;, you can write your own &lt;em&gt;ad-hoc&lt;/em&gt; dispatcher:&lt;/p&gt;
-
-&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;class WebsocketHandler
-  def call(websocket)
-    message = websocket.read
-    # do something with the message, call methods on other objects, log stuff, have your fun
-  end
-end
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;What the docs don’t address are some basics of sockets programming. If you see your handler hang and never respond again, requiring you to restart, don’t fret: you just have to provide a loop to read from the the socket and let Celluloid::IO do its non-blocking magic:&lt;/p&gt;
-
-&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;class WebsocketHandler
-  def call(websocket)
-    loop do
-      message = websocket.read
-      # do something with the message, call methods on other objects, log stuff, have your fun
-    end
-  end
-end
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;Don’t worry: your CPU won’t be pegged at 100%, because non-blocking. You’ll be subjected, however, to the same limitations node has regarding CPU usage and its event handlers (i.e. if you are CPU-intensive, you’ll affect throughput).&lt;/p&gt;
-
-&lt;p&gt;Luckily, we have threads in Ruby. I decided to take advantage of that by assigning each client to a Celluloid Actor, which allows me to provide some of the CPU-intensive operations without compromising (at least not heavily) other Users. It has been working fine so far.&lt;/p&gt;
-
-&lt;h2 id=&quot;whats-missing&quot;&gt;What’s missing&lt;/h2&gt;
-
-&lt;p&gt;My solution doesn’t take into account non-WebSocket clients, but it should. &lt;em&gt;webmachine-ruby&lt;/em&gt; makes it easy by allowing you to implement streaming APIs without much trouble, and I suppose it’ll only take a bit of JS to fallback from one to the other and provide an abstract connection to consumers.&lt;/p&gt;
-
-&lt;p&gt;The documentation also doesn’t go over all the events that can happen on the socket (&lt;em&gt;onerror&lt;/em&gt;, &lt;em&gt;onclose&lt;/em&gt;, &lt;em&gt;onopen&lt;/em&gt;, &lt;em&gt;onmessage&lt;/em&gt;). You can see them as methods on the socket, each taking a block, but for my use case I just let the actor crash and be done with it. If I’m missing some cleanup, please let me know.&lt;/p&gt;
-
-&lt;p&gt;This architecture also doesn’t provide a ready-baked pub/sub system, with channels and message brokers. If that’s more in the spirit of what you need, check out &lt;a href=&quot;http://faye.jcoglan.com/&quot;&gt;faye&lt;/a&gt; and &lt;a href=&quot;https://github.com/websocket-rails/websocket-rails&quot;&gt;websocket-rails&lt;/a&gt;.&lt;/p&gt;</content><author><name></name></author><category term="ruby" /><category term="websockets" /><category term="rails" /><category term="web" /><category term="celluloid" /><category term="webmachine-ruby" /><summary type="html">At my main job, we have a large datastructure that takes considerable CPU time to be built, but remains unchanged thereafter. Its job is to geocode positions to and from a local reference system, which in turn provides us the ability to pin records, for instance, to a place on a Road, and know to which coordinate pair a local reference would correspond.</summary></entry></feed>
+&lt;p&gt;Por fim apresentei um projetinho que fiz especialmente para o encontro, o &lt;a href=&quot;https://github.com/dodecaphonic/balladina-ruby&quot;&gt;Balladina&lt;/a&gt;. Foi divertido fazê-lo, e aprendi bastante coisa sobre o Celluloid no processo. Pude também contrastar algumas coisas com a parca experiência que tive com o Akka no &lt;a href=&quot;/blog/2014/01/12/reactive/&quot;&gt;curso do Coursera&lt;/a&gt;, e a maturidade do Celluloid relativa à do Akka me deixou esperançoso de um futuro bacana no Ruby. Vamos torcer pelo melhor.&lt;/p&gt;</content><author><name></name></author><category term="ruby" /><category term="celluloid" /><category term="actors" /><category term="akka" /><category term="erlang" /><summary type="html">No dia 15 de março de 2014, aproveitei o encontro do RubyOnRio para falar sobre Celluloid, uma implementação do Actor Model para Ruby. Como programação reativa, concorrência, paralelismo e quetais têm ocupado minha mente nos últimos meses, achei por bem conversar com o pessoal sobre como isso é relevante para o futuro do desenvolvimento de software e para o Ruby em si, constantemente sob ameaça (se Hacker News for parâmetro) de ser soterrado por uma tecnologia mais antenada com os novos tempos.</summary></entry></feed>

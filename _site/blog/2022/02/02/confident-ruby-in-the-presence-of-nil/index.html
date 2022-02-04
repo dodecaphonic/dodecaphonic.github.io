@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1"><!-- Begin Jekyll SEO tag v2.5.0 -->
+<title>Confident Ruby in the presence of nil | Troika Tech</title>
+<meta name="generator" content="Jekyll v3.8.5" />
+<meta property="og:title" content="Confident Ruby in the presence of nil" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="When people talk about working with Ruby, the usual spiel is that it’s about joy, humans at the center, MINASWAN, kittens and all that sparkles. The role of anxiety in our day to day is rarely addressed. Or rather, of one specific anxiety: will I get a NoMethodError because I have an unexpected nil?" />
+<meta property="og:description" content="When people talk about working with Ruby, the usual spiel is that it’s about joy, humans at the center, MINASWAN, kittens and all that sparkles. The role of anxiety in our day to day is rarely addressed. Or rather, of one specific anxiety: will I get a NoMethodError because I have an unexpected nil?" />
+<link rel="canonical" href="http://troikatech.com/blog/2022/02/02/confident-ruby-in-the-presence-of-nil/" />
+<meta property="og:url" content="http://troikatech.com/blog/2022/02/02/confident-ruby-in-the-presence-of-nil/" />
+<meta property="og:site_name" content="Troika Tech" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2022-02-02T12:34:00-03:00" />
+<script type="application/ld+json">
+{"mainEntityOfPage":{"@type":"WebPage","@id":"http://troikatech.com/blog/2022/02/02/confident-ruby-in-the-presence-of-nil/"},"url":"http://troikatech.com/blog/2022/02/02/confident-ruby-in-the-presence-of-nil/","@type":"BlogPosting","description":"When people talk about working with Ruby, the usual spiel is that it’s about joy, humans at the center, MINASWAN, kittens and all that sparkles. The role of anxiety in our day to day is rarely addressed. Or rather, of one specific anxiety: will I get a NoMethodError because I have an unexpected nil?","headline":"Confident Ruby in the presence of nil","dateModified":"2022-02-02T12:34:00-03:00","datePublished":"2022-02-02T12:34:00-03:00","@context":"http://schema.org"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/main.css"><link type="application/atom+xml" rel="alternate" href="http://troikatech.com/feed.xml" title="Troika Tech" /></head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/">Troika Tech</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/about/">About</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">Confident Ruby in the presence of nil</h1>
+    <p class="post-meta">
+      <time class="dt-published" datetime="2022-02-02T12:34:00-03:00" itemprop="datePublished">Feb 2, 2022
+      </time></p>
+  </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <p>When people talk about working with Ruby, the usual <em>spiel</em> is that it’s about joy, humans at the center, <a href="https://www.wordsense.eu/MINASWAN/">MINASWAN</a>, kittens and all that sparkles. The role of anxiety in our day to day is rarely addressed. Or rather, of one specific anxiety: will I get a <code class="highlighter-rouge">NoMethodError</code> because I have an unexpected <code class="highlighter-rouge">nil</code>?</p>
+
+<p>Think about it. If you ask an Array for a value that’s not there, you get <code class="highlighter-rouge">nil</code>. If you call a method that produces a side-effect, you often get a <code class="highlighter-rouge">nil</code>. If you call another method that stops when a precondition is not met, it might return <code class="highlighter-rouge">nil</code>. Even writing this list made me sweat a little.</p>
+
+<p>That fact often leads to patterns like:</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">do_something</span> <span class="k">if</span> <span class="n">something</span>
+<span class="n">x</span> <span class="o">=</span> <span class="n">y</span> <span class="k">if</span> <span class="n">z</span>
+<span class="n">foo</span> <span class="o">=</span> <span class="n">bar</span> <span class="p">?</span> <span class="n">bar</span><span class="p">.</span><span class="nf">size</span> <span class="p">:</span> <span class="o">-</span><span class="mi">1</span>
+</code></pre></div></div>
+
+<p>We get used to it, but it’s hardly the most fluent or confident way to write code. Consider the following:</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">rejigger_oldest_widget</span><span class="p">(</span><span class="n">widgets</span><span class="p">,</span> <span class="n">max_age_years</span><span class="p">)</span>
+  <span class="n">oldest_widget</span> <span class="o">=</span> <span class="n">widgets</span>
+                  <span class="p">.</span><span class="nf">select</span><span class="p">(</span><span class="o">&amp;</span><span class="ss">:working?</span><span class="p">)</span>
+                  <span class="p">.</span><span class="nf">find</span> <span class="p">{</span> <span class="n">_1</span><span class="p">.</span><span class="nf">age_in_years</span> <span class="o">&lt;=</span> <span class="n">max_age_years</span> <span class="p">}</span>
+
+  <span class="k">if</span> <span class="n">oldest_widget</span>
+    <span class="n">oldest_widget</span>
+      <span class="p">.</span><span class="nf">rejigger</span> 
+      <span class="p">.</span><span class="nf">shuffle</span>
+      <span class="p">.</span><span class="nf">shine</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+</code></pre></div></div>
+
+<p>It’s not awful, but it’s hardly great. What if <code class="highlighter-rouge">rejigger</code>, <code class="highlighter-rouge">shuffle</code> or <code class="highlighter-rouge">shine</code> also return <code class="highlighter-rouge">nil</code> on occasion? Or worse, what if they <em>all</em> might produce one? Do we despair?</p>
+
+<h2 id="our-knight-in-shiny-armor">Our knight in shiny armor</h2>
+
+<p>Like with many other languages, the solution Ruby (since 2.3) has found for this problem is the safe navigation operator, represented by <code class="highlighter-rouge">&amp;.</code>. It’s neither only <code class="highlighter-rouge">&amp;</code> nor simply <code class="highlighter-rouge">.</code>, but <code class="highlighter-rouge">&amp;.</code>, a fine unit that allows us to change <code class="highlighter-rouge">rejigger_oldest_widget</code> to the following:</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">rejigger_oldest_widget</span><span class="p">(</span><span class="n">widgets</span><span class="p">,</span> <span class="n">max_age_years</span><span class="p">)</span>
+  <span class="n">widgets</span>
+    <span class="p">.</span><span class="nf">select</span><span class="p">(</span><span class="o">&amp;</span><span class="ss">:working?</span><span class="p">)</span>
+    <span class="p">.</span><span class="nf">find</span> <span class="p">{</span> <span class="n">_1</span><span class="p">.</span><span class="nf">age_in_years</span> <span class="o">&lt;=</span> <span class="n">max_age_years</span> <span class="p">}</span>
+    <span class="o">&amp;</span><span class="p">.</span><span class="nf">rejigger</span>
+    <span class="o">&amp;</span><span class="p">.</span><span class="nf">shuffle</span>
+    <span class="o">&amp;</span><span class="p">.</span><span class="nf">shine</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+</code></pre></div></div>
+
+<p>Since <code class="highlighter-rouge">Enumerable#find</code> might return a <code class="highlighter-rouge">nil</code>, <code class="highlighter-rouge">rejigger</code> will only be called when it returns a value. If it doesn’t, the entire chain is halted and <code class="highlighter-rouge">rejigger_oldest_widget</code> returns <code class="highlighter-rouge">nil</code>.</p>
+
+<p>Conveniently, it works with anything that could be called as a method, no matter the receiver (even <code class="highlighter-rouge">nil</code>). Say you had the following:</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">ruffle_feathers</span><span class="p">(</span><span class="n">random_joe</span><span class="p">)</span>
+  <span class="k">return</span> <span class="k">if</span> <span class="p">(</span><span class="n">feathers</span> <span class="o">=</span> <span class="n">random_joe</span><span class="p">.</span><span class="nf">feathers</span><span class="p">).</span><span class="nf">nil?</span>
+
+  <span class="n">ruffled_feathers</span> <span class="o">=</span> <span class="n">annoyobot</span><span class="p">.</span><span class="nf">ruffle_feathers</span><span class="p">(</span><span class="n">feathers</span><span class="p">)</span>
+  <span class="n">annoyometer</span><span class="p">.</span><span class="nf">measure</span><span class="p">(</span><span class="n">ruffled_feathers</span><span class="p">)</span>
+<span class="k">end</span>
+</code></pre></div></div>
+
+<p>You could easily write that as:</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">ruffle_feathers</span><span class="p">(</span><span class="n">bird</span><span class="p">)</span>
+  <span class="n">random_joe</span>
+    <span class="p">.</span><span class="nf">feathers</span>
+    <span class="o">&amp;</span><span class="p">.</span><span class="nf">then</span> <span class="p">{</span> <span class="n">annoyobot</span><span class="p">.</span><span class="nf">ruffle_feathers</span><span class="p">(</span><span class="n">_1</span><span class="p">)</span> <span class="p">}</span>
+    <span class="o">&amp;</span><span class="p">.</span><span class="nf">then</span> <span class="p">{</span> <span class="n">annoyometer</span><span class="p">.</span><span class="nf">measure</span><span class="p">(</span><span class="n">_1</span><span class="p">)</span> <span class="p">}</span>
+<span class="k">end</span>
+</code></pre></div></div>
+
+<p>I personally tend to favor this style. I don’t actually care about <code class="highlighter-rouge">ruffled_feathers</code> other than as an argument to <code class="highlighter-rouge">measure</code>. This makes that more evident (i.e. we want to go from a <code class="highlighter-rouge">random_joe</code> whose <code class="highlighter-rouge">feathers</code> can be ruffled to how ruffled their feathers were).</p>
+
+<h2 id="maybe-we-can-discuss-more"><em>Maybe</em> we can discuss more</h2>
+
+<p>If you’re familiar with functional languages in the ML family, you’re probably making the connection I (and <a href="https://github.com/raganwald/andand">many</a> <a href="https://dry-rb.org/gems/dry-monads/1.0/">others</a>) have made: this is a lot like using the Maybe/Option monad. <code class="highlighter-rouge">&amp;.</code> is like <code class="highlighter-rouge">map</code>/<code class="highlighter-rouge">fmap</code>, and you can have the short-circuiting capabilities of <code class="highlighter-rouge">flatMap</code>/<code class="highlighter-rouge">bind</code> by producing a <code class="highlighter-rouge">nil</code> at any step of your computation.</p>
+
+<p>Some comment to that effect can be found in reference to any language with a safe navigation operator — often with a verdict like <em>“this is a hack”</em>, or <em>“this is not as good as having a Monad”</em>. And they’re not wrong! If you learn how Functors, Applicatives and Monads work and what they make possible, you’ll probably be a little disappointed with how little <code class="highlighter-rouge">&amp;.</code> accomplishes.</p>
+
+<p>However, when terms like “monads”, “laws”, and “categories” show up in conversation, they mean a lot to the initiated and next to nothing to programmers with other backgrounds. Why do Haskell snobs poo-poo something which looks so useful?</p>
+
+<p>Since this is not a post about the narcissism of minor differences (nor about anti-intellectual statements like the one this comment parenthesizes), let’s focus on a practical scenario you can’t conveniently handle with <code class="highlighter-rouge">&amp;.</code> alone.</p>
+
+<h2 id="too-many-nils">Too many nils</h2>
+
+<p>Sometimes you need to perform a computation with two or more values, and none of them can be <code class="highlighter-rouge">nil</code>. If any are <code class="highlighter-rouge">nil</code>, the computation also produces <code class="highlighter-rouge">nil</code>. So you write something like this:</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">fix_global_warming</span><span class="p">(</span><span class="n">committed_nations</span><span class="p">,</span> <span class="n">ethical_companies</span><span class="p">,</span> <span class="n">conscientious_citizens</span><span class="p">)</span>
+  <span class="k">return</span> <span class="k">unless</span> <span class="n">committed_nations</span> <span class="o">&amp;&amp;</span> <span class="n">ethical_companies</span> <span class="o">&amp;&amp;</span> <span class="n">conscientious_citizens</span>
+  
+  <span class="n">fix_it!</span><span class="p">(</span><span class="n">committed_nations</span><span class="p">,</span> <span class="n">ethical_companies</span><span class="p">,</span> <span class="n">conscientious_citizens</span><span class="p">)</span>
+<span class="k">end</span>
+</code></pre></div></div>
+
+<p>But what you really want is something as declarative as chaining with <code class="highlighter-rouge">&amp;.</code>. “So why not <code class="highlighter-rouge">&amp;.</code>?”, you think, ending up with:</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">fix_global_warming</span><span class="p">(</span><span class="n">committed_nations</span><span class="p">,</span> <span class="n">ethical_companies</span><span class="p">,</span> <span class="n">conscientious_citizens</span><span class="p">)</span>
+  <span class="n">committed_nations</span><span class="o">&amp;</span><span class="p">.</span><span class="nf">then</span> <span class="k">do</span> <span class="o">|</span><span class="n">nations</span><span class="o">|</span> 
+    <span class="n">ethical_companies</span><span class="o">&amp;</span><span class="p">.</span><span class="nf">then</span> <span class="k">do</span> <span class="o">|</span><span class="n">companies</span><span class="o">|</span> 
+      <span class="n">conscientious_citizens</span><span class="o">&amp;</span><span class="p">.</span><span class="nf">then</span> <span class="k">do</span> <span class="o">|</span><span class="n">citizens</span><span class="o">|</span> 
+        <span class="n">fix_it!</span><span class="p">(</span><span class="n">nations</span><span class="p">,</span> <span class="n">companies</span><span class="p">,</span> <span class="n">citizens</span><span class="p">)</span> 
+      <span class="k">end</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+</code></pre></div></div>
+
+<p>It completely hides what the method actually does, and you might have trouble understanding that this is all for checking for the presence of values. The guard clause in the original version is <em>definitely</em> better.</p>
+
+<p>How does Haskell solve this? After all, if writing code in that language were anything like the sample above, people wouldn’t think it’s so great. Fortunately, there are a few ways to make it nicer. We’ll go over some of them.</p>
+
+<p>The first requires special syntax called <a href="https://en.m.wikibooks.org/wiki/Haskell/do_notation">“Do notation”</a>:</p>
+
+<div class="language-haskell highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">-- Starting with something like the Ruby code above</span>
+<span class="n">fixGlobalWarming</span> <span class="o">::</span> <span class="kt">Maybe</span> <span class="kt">ComittedNations</span> <span class="o">-&gt;</span> <span class="kt">Maybe</span> <span class="kt">EthicalCompanies</span> <span class="o">-&gt;</span> <span class="kt">Maybe</span> <span class="kt">ConscientiousCitizens</span> <span class="o">-&gt;</span> <span class="kt">Maybe</span> <span class="kt">BetterPlanet</span>
+<span class="n">fixGlobalWarming</span> <span class="n">committedNations</span> <span class="n">ethicalCompanies</span> <span class="n">conscientiousCitizens</span> <span class="o">=</span> 
+  <span class="n">comittedNations</span> <span class="o">&gt;&gt;=</span> 
+    <span class="nf">\</span><span class="n">nations</span> <span class="o">-&gt;</span> <span class="n">ethicalCompanies</span> <span class="o">&gt;&gt;=</span>
+      <span class="nf">\</span><span class="n">companies</span> <span class="o">-&gt;</span> <span class="n">conscientiousCitizens</span> <span class="o">&lt;&amp;&gt;</span>
+        <span class="nf">\</span><span class="n">citizens</span> <span class="o">-&gt;</span> <span class="n">pure</span> <span class="p">(</span><span class="n">fixIt</span> <span class="n">nations</span> <span class="n">companies</span> <span class="n">citizens</span><span class="p">)</span>
+      
+<span class="c1">-- A version with do notation</span>
+<span class="n">fixGlobalWarming</span> <span class="n">committedNations</span> <span class="n">ethicalCompanies</span> <span class="n">conscientiousCitizens</span> <span class="o">=</span> <span class="kr">do</span>
+  <span class="n">nations</span> <span class="o">&lt;-</span> <span class="n">committedNations</span>
+  <span class="n">companies</span> <span class="o">&lt;-</span> <span class="n">ethicalCompanies</span>
+  <span class="n">citizens</span> <span class="o">&lt;-</span> <span class="n">conscientiousCitizens</span>
+  
+  <span class="n">pure</span> <span class="p">(</span><span class="n">fixIt</span> <span class="n">nations</span> <span class="n">companies</span> <span class="n">citizens</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p>Since it’s syntax, we can only approximate it (<a href="https://dry-rb.org/gems/dry-monads/1.0/">dry-monads</a> has its take), and doing so requires a bit of infrastructure. However, there are two other options: relying on it being an <code class="highlighter-rouge">Applicative Functor</code> or using a combinator to sweep the dirt under the rug:</p>
+
+<div class="language-haskell highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">-- As an Applicative Functor</span>
+<span class="n">fixGlobalWarming</span> <span class="n">committedNations</span> <span class="n">ethicalCompanies</span> <span class="n">conscientiousCitizens</span> <span class="o">=</span>
+  <span class="n">fixIt</span> <span class="o">&lt;$&gt;</span> <span class="n">committedNations</span> <span class="o">&lt;*&gt;</span> <span class="n">ethicalCompanies</span> <span class="o">&lt;*&gt;</span> <span class="n">conscientiousCitizens</span>
+  
+<span class="c1">-- With a combinator</span>
+<span class="n">fixGlobalWarming</span> <span class="o">=</span> <span class="n">liftM3</span> <span class="n">fixIt</span>
+</code></pre></div></div>
+
+<p>The Applicative version would never fit in Ruby exactly at is (though it’s awesome!). The one that can impact us the most is <code class="highlighter-rouge">liftM3</code>.</p>
+
+<p>According to its documentation, what it does is “promote a function to a monad”. That means that you can take any function that takes three values and make it work with values in any monad, including Maybe. As you can guess, Haskell needs a <code class="highlighter-rouge">liftM2</code>, as well as a <code class="highlighter-rouge">liftM4</code>, and so on.</p>
+
+<p>Since we don’t have to differentiate their types, we can define a similar combinator that allows us to work on any number of arguments:</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">with_all_present</span><span class="p">(</span><span class="o">*</span><span class="n">values</span><span class="p">)</span>
+  <span class="k">yield</span> <span class="o">*</span><span class="n">values</span> <span class="k">if</span> <span class="n">values</span><span class="p">.</span><span class="nf">none?</span><span class="p">(</span><span class="o">&amp;</span><span class="ss">:nil?</span><span class="p">)</span>
+<span class="k">end</span>
+</code></pre></div></div>
+
+<p>Which gives us a way to rewrite <code class="highlighter-rouge">fix_global_warming</code> as follows:</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">fix_global_warming</span><span class="p">(</span><span class="n">committed_nations</span><span class="p">,</span> <span class="n">ethical_companies</span><span class="p">,</span> <span class="n">conscientious_citizens</span><span class="p">)</span>
+  <span class="n">with_all_present</span><span class="p">(</span><span class="n">committed_nations</span><span class="p">,</span> <span class="n">ethical_companies</span><span class="p">,</span> <span class="n">conscientious_citizens</span><span class="p">)</span> <span class="k">do</span>
+    <span class="n">fix_it</span><span class="p">(</span><span class="n">_1</span><span class="p">,</span> <span class="n">_2</span><span class="p">,</span> <span class="n">_3</span><span class="p">)</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+</code></pre></div></div>
+
+<h2 id="is-it-actually-better">Is it actually better?</h2>
+
+<p>As programmers, we’re always trying to find a good balance between terseness and readability. It’s easy to go too far, and each individual cares about different things. Knowing that, it would be foolish to be assertive about any technique.</p>
+
+<p>In my book, both <code class="highlighter-rouge">&amp;.</code> and custom combinators give us tools to end up with code that is more confident and expressive, unmarred by the fear of <code class="highlighter-rouge">nil</code>. They’re great steps in the direction of robustness. And even if it’s true that neither will kill every <code class="highlighter-rouge">NoMethodError</code>, they’ll go a long way.</p>
+
+
+  </div><a class="u-url" href="/blog/2022/02/02/confident-ruby-in-the-presence-of-nil/" hidden></a>
+</article>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">Troika Tech</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">Troika Tech</li></ul>
+      </div>
+
+      <div class="footer-col footer-col-2"><ul class="social-media-list"><li><a href="https://github.com/dodecaphonic"><svg class="svg-icon"><use xlink:href="/assets/minima-social-icons.svg#github"></use></svg> <span class="username">dodecaphonic</span></a></li><li><a href="https://www.twitter.com/dodecaphonic"><svg class="svg-icon"><use xlink:href="/assets/minima-social-icons.svg#twitter"></use></svg> <span class="username">dodecaphonic</span></a></li></ul>
+</div>
+
+      <div class="footer-col footer-col-3">
+        <p>Ruby and JS in the streets, Haskell and friends between the sheets.</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>
