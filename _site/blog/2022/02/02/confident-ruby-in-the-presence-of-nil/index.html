@@ -7,8 +7,8 @@
 <meta name="generator" content="Jekyll v3.9.0" />
 <meta property="og:title" content="Confident Ruby in the presence of nil" />
 <meta property="og:locale" content="en_US" />
-<meta name="description" content="When people talk about working with Ruby, the usual spiel is that it’s about joy, humans at the center, MINASWAN, kittens and all that sparkles. The role of anxiety in our day to day is rarely addressed. Or rather, of one specific anxiety: will I get a NoMethodError because I have an unexpected nil?" />
-<meta property="og:description" content="When people talk about working with Ruby, the usual spiel is that it’s about joy, humans at the center, MINASWAN, kittens and all that sparkles. The role of anxiety in our day to day is rarely addressed. Or rather, of one specific anxiety: will I get a NoMethodError because I have an unexpected nil?" />
+<meta name="description" content="When people talk about working with Ruby, the usual spiel is about joy, humans at the center, MINASWAN, kittens, and all that sparkles. However, they rarely address the role of anxiety in our day to day. Or rather, of one specific concern: will I get a NoMethodError due to an unexpected nil?" />
+<meta property="og:description" content="When people talk about working with Ruby, the usual spiel is about joy, humans at the center, MINASWAN, kittens, and all that sparkles. However, they rarely address the role of anxiety in our day to day. Or rather, of one specific concern: will I get a NoMethodError due to an unexpected nil?" />
 <link rel="canonical" href="http://troikatech.com/blog/2022/02/02/confident-ruby-in-the-presence-of-nil/" />
 <meta property="og:url" content="http://troikatech.com/blog/2022/02/02/confident-ruby-in-the-presence-of-nil/" />
 <meta property="og:site_name" content="Troika Tech" />
@@ -17,7 +17,7 @@
 <meta name="twitter:card" content="summary" />
 <meta property="twitter:title" content="Confident Ruby in the presence of nil" />
 <script type="application/ld+json">
-{"url":"http://troikatech.com/blog/2022/02/02/confident-ruby-in-the-presence-of-nil/","headline":"Confident Ruby in the presence of nil","dateModified":"2022-02-02T12:34:00-03:00","datePublished":"2022-02-02T12:34:00-03:00","@type":"BlogPosting","description":"When people talk about working with Ruby, the usual spiel is that it’s about joy, humans at the center, MINASWAN, kittens and all that sparkles. The role of anxiety in our day to day is rarely addressed. Or rather, of one specific anxiety: will I get a NoMethodError because I have an unexpected nil?","mainEntityOfPage":{"@type":"WebPage","@id":"http://troikatech.com/blog/2022/02/02/confident-ruby-in-the-presence-of-nil/"},"@context":"https://schema.org"}</script>
+{"url":"http://troikatech.com/blog/2022/02/02/confident-ruby-in-the-presence-of-nil/","headline":"Confident Ruby in the presence of nil","dateModified":"2022-02-02T12:34:00-03:00","datePublished":"2022-02-02T12:34:00-03:00","@type":"BlogPosting","description":"When people talk about working with Ruby, the usual spiel is about joy, humans at the center, MINASWAN, kittens, and all that sparkles. However, they rarely address the role of anxiety in our day to day. Or rather, of one specific concern: will I get a NoMethodError due to an unexpected nil?","mainEntityOfPage":{"@type":"WebPage","@id":"http://troikatech.com/blog/2022/02/02/confident-ruby-in-the-presence-of-nil/"},"@context":"https://schema.org"}</script>
 <!-- End Jekyll SEO tag -->
 <link rel="stylesheet" href="/assets/main.css"><link type="application/atom+xml" rel="alternate" href="http://troikatech.com/feed.xml" title="Troika Tech" /></head>
 <body><header class="site-header" role="banner">
@@ -47,11 +47,11 @@
   </header>
 
   <div class="post-content e-content" itemprop="articleBody">
-    <p>When people talk about working with Ruby, the usual <em>spiel</em> is that it’s about joy, humans at the center, <a href="https://www.wordsense.eu/MINASWAN/">MINASWAN</a>, kittens and all that sparkles. The role of anxiety in our day to day is rarely addressed. Or rather, of one specific anxiety: will I get a <code class="language-plaintext highlighter-rouge">NoMethodError</code> because I have an unexpected <code class="language-plaintext highlighter-rouge">nil</code>?</p>
+    <p>When people talk about working with Ruby, the usual <em>spiel</em> is about joy, humans at the center, <a href="https://www.wordsense.eu/MINASWAN/">MINASWAN</a>, kittens, and all that sparkles. However, they rarely address the role of anxiety in our day to day. Or rather, of one specific concern: will I get a <code class="language-plaintext highlighter-rouge">NoMethodError</code> due to an unexpected <code class="language-plaintext highlighter-rouge">nil</code>?</p>
 
-<p>Think about it. If you ask an Array for a value that’s not there, you get <code class="language-plaintext highlighter-rouge">nil</code>. If you call a method that produces a side-effect, you often get a <code class="language-plaintext highlighter-rouge">nil</code>. If you call another method that stops when a precondition is not met, it might return <code class="language-plaintext highlighter-rouge">nil</code>. Even writing this list made me sweat a little.</p>
+<p>Think about it. If you ask an Array for a value that’s not there, you get <code class="language-plaintext highlighter-rouge">nil</code>. If you call a method that produces a side-effect, you often get <code class="language-plaintext highlighter-rouge">nil</code>. If you call another method and it stops when a precondition fails, it might return <code class="language-plaintext highlighter-rouge">nil</code>. Even writing this list made me sweat a little.</p>
 
-<p>That fact often leads to patterns like:</p>
+<p>That inescapable reality often leads to patterns like:</p>
 
 <div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">do_something</span> <span class="k">if</span> <span class="n">something</span>
 <span class="n">x</span> <span class="o">=</span> <span class="n">y</span> <span class="k">if</span> <span class="n">z</span>
@@ -74,11 +74,11 @@
 <span class="k">end</span>
 </code></pre></div></div>
 
-<p>It’s not awful, but it’s hardly great. What if <code class="language-plaintext highlighter-rouge">rejigger</code>, <code class="language-plaintext highlighter-rouge">shuffle</code> or <code class="language-plaintext highlighter-rouge">shine</code> also return <code class="language-plaintext highlighter-rouge">nil</code> on occasion? Or worse, what if they <em>all</em> might produce one? Do we despair?</p>
+<p>It’s not awful, but it’s hardly remarkable. What if <code class="language-plaintext highlighter-rouge">rejigger</code>, <code class="language-plaintext highlighter-rouge">shuffle</code>, or <code class="language-plaintext highlighter-rouge">shine</code> also return <code class="language-plaintext highlighter-rouge">nil</code> on occasion? Or worse, what if they <em>all</em> might produce one? Do we despair?</p>
 
 <h2 id="our-knight-in-shiny-armor">Our knight in shiny armor</h2>
 
-<p>Like with many other languages, the solution Ruby (since 2.3) has found for this problem is the safe navigation operator, represented by <code class="language-plaintext highlighter-rouge">&amp;.</code>. It’s neither only <code class="language-plaintext highlighter-rouge">&amp;</code> nor simply <code class="language-plaintext highlighter-rouge">.</code>, but <code class="language-plaintext highlighter-rouge">&amp;.</code>, a fine unit that allows us to change <code class="language-plaintext highlighter-rouge">rejigger_oldest_widget</code> to the following:</p>
+<p>Like many other languages, the solution Ruby (since 2.3) has found for this problem is the safe navigation operator, represented by <code class="language-plaintext highlighter-rouge">&amp;.</code>. It’s neither only <code class="language-plaintext highlighter-rouge">&amp;</code> nor simply <code class="language-plaintext highlighter-rouge">.</code>, but <code class="language-plaintext highlighter-rouge">&amp;.</code>, a worthy unit that allows us to change <code class="language-plaintext highlighter-rouge">rejigger_oldest_widget</code> to the following:</p>
 
 <div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">rejigger_oldest_widget</span><span class="p">(</span><span class="n">widgets</span><span class="p">,</span> <span class="n">max_age_years</span><span class="p">)</span>
   <span class="n">widgets</span>
@@ -91,9 +91,9 @@
 <span class="k">end</span>
 </code></pre></div></div>
 
-<p>Since <code class="language-plaintext highlighter-rouge">Enumerable#find</code> might return a <code class="language-plaintext highlighter-rouge">nil</code>, <code class="language-plaintext highlighter-rouge">rejigger</code> will only be called when it returns a value. If it doesn’t, the entire chain is halted and <code class="language-plaintext highlighter-rouge">rejigger_oldest_widget</code> returns <code class="language-plaintext highlighter-rouge">nil</code>.</p>
+<p>Since <code class="language-plaintext highlighter-rouge">Enumerable#find</code> might return a <code class="language-plaintext highlighter-rouge">nil</code>, it will only be followed by <code class="language-plaintext highlighter-rouge">rejigger</code> when it produces a value. When it doesn’t, the computation stops at that point, and <code class="language-plaintext highlighter-rouge">rejigger_oldest_widget</code> returns <code class="language-plaintext highlighter-rouge">nil</code>.</p>
 
-<p>Conveniently, it works with anything that could be called as a method, no matter the receiver (even <code class="language-plaintext highlighter-rouge">nil</code>). Say you had the following:</p>
+<p>Conveniently, it works with anything that could be called as a method, no matter the receiver (even <code class="language-plaintext highlighter-rouge">nil</code>). So, for example, say you had the following:</p>
 
 <div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">ruffle_feathers</span><span class="p">(</span><span class="n">random_joe</span><span class="p">)</span>
   <span class="k">return</span> <span class="k">if</span> <span class="p">(</span><span class="n">feathers</span> <span class="o">=</span> <span class="n">random_joe</span><span class="p">.</span><span class="nf">feathers</span><span class="p">).</span><span class="nf">nil?</span>
@@ -113,21 +113,21 @@
 <span class="k">end</span>
 </code></pre></div></div>
 
-<p>I personally tend to favor this style. I don’t actually care about <code class="language-plaintext highlighter-rouge">ruffled_feathers</code> other than as an argument to <code class="language-plaintext highlighter-rouge">measure</code>. This makes that more evident (i.e. we want to go from a <code class="language-plaintext highlighter-rouge">random_joe</code> whose <code class="language-plaintext highlighter-rouge">feathers</code> can be ruffled to how ruffled their feathers were).</p>
+<p>I tend to favor this style. I don’t care about <code class="language-plaintext highlighter-rouge">ruffled_feathers</code> other than as an argument to <code class="language-plaintext highlighter-rouge">measure</code>. The chain of calls with the safe navigation operator makes that more evident (i.e., we want to go from a <code class="language-plaintext highlighter-rouge">random_joe</code> whose <code class="language-plaintext highlighter-rouge">feathers</code> can be ruffled to how ruffled their feathers were).</p>
 
-<h2 id="maybe-we-can-discuss-more"><em>Maybe</em> we can discuss more</h2>
+<h2 id="maybe-we-can-discuss-further"><em>Maybe</em> we can discuss further</h2>
 
-<p>If you’re familiar with functional languages in the ML family, you’re probably making the connection I (and <a href="https://github.com/raganwald/andand">many</a> <a href="https://dry-rb.org/gems/dry-monads/1.0/">others</a>) have made: this is a lot like using the Maybe/Option monad. <code class="language-plaintext highlighter-rouge">&amp;.</code> is like <code class="language-plaintext highlighter-rouge">map</code>/<code class="language-plaintext highlighter-rouge">fmap</code>, and you can have the short-circuiting capabilities of <code class="language-plaintext highlighter-rouge">flatMap</code>/<code class="language-plaintext highlighter-rouge">bind</code> by producing a <code class="language-plaintext highlighter-rouge">nil</code> at any step of your computation.</p>
+<p>Suppose you’re familiar with functional languages in the ML family. In that case, you’re probably making the connection I (and <a href="https://github.com/raganwald/andand">many</a> <a href="https://dry-rb.org/gems/dry-monads/1.0/">others</a>) have made: this is a lot like using the Maybe/Option monad. <code class="language-plaintext highlighter-rouge">&amp;.</code> is like <code class="language-plaintext highlighter-rouge">map</code>/<code class="language-plaintext highlighter-rouge">fmap</code>. You can have the short-circuiting capabilities of <code class="language-plaintext highlighter-rouge">flatMap</code>/<code class="language-plaintext highlighter-rouge">bind</code> by producing a <code class="language-plaintext highlighter-rouge">nil</code> at any step of your computation.</p>
 
-<p>Some comment to that effect can be found in reference to any language with a safe navigation operator — often with a verdict like <em>“this is a hack”</em>, or <em>“this is not as good as having a Monad”</em>. And they’re not wrong! If you learn how Functors, Applicatives and Monads work and what they make possible, you’ll probably be a little disappointed with how little <code class="language-plaintext highlighter-rouge">&amp;.</code> accomplishes.</p>
+<p>You can easily find comments to that effect about any language with a safe navigation operator — often with a verdict like <em>“this is a hack”</em> or <em>“this is not as good as having a Monad.”</em> And they’re not wrong! Indeed, if you learn how Functors, Applicatives, and Monads work and what they make possible, you’ll probably be a little disappointed with how little <code class="language-plaintext highlighter-rouge">&amp;.</code> accomplishes.</p>
 
-<p>However, when terms like “monads”, “laws”, and “categories” show up in conversation, they mean a lot to the initiated and next to nothing to programmers with other backgrounds. Why do Haskell snobs poo-poo something which looks so useful?</p>
+<p>However, when terms like “monads,” “laws,” and “categories” show up in conversation, they mean a lot to the initiated and next to nothing to programmers with other backgrounds. So why do Haskell snobs poo-poo something which looks so helpful?</p>
 
-<p>Since this is not a post about the narcissism of minor differences (nor about anti-intellectual statements like the one this comment parenthesizes), let’s focus on a practical scenario you can’t conveniently handle with <code class="language-plaintext highlighter-rouge">&amp;.</code> alone.</p>
+<p>Since this is not a treatise on the narcissism of minor differences, nor another Monad tutorial, let’s focus on a practical scenario you can’t conveniently handle with <code class="language-plaintext highlighter-rouge">&amp;.</code> alone.</p>
 
 <h2 id="too-many-nils">Too many nils</h2>
 
-<p>Sometimes you need to perform a computation with two or more values, and none of them can be <code class="language-plaintext highlighter-rouge">nil</code>. If any are <code class="language-plaintext highlighter-rouge">nil</code>, the computation also produces <code class="language-plaintext highlighter-rouge">nil</code>. So you write something like this:</p>
+<p>Sometimes you need to perform a computation with two or more values, and none of them can be <code class="language-plaintext highlighter-rouge">nil</code>. If any are <code class="language-plaintext highlighter-rouge">nil</code>, the final product will also be <code class="language-plaintext highlighter-rouge">nil</code>. So you write something like this:</p>
 
 <div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">fix_global_warming</span><span class="p">(</span><span class="n">committed_nations</span><span class="p">,</span> <span class="n">ethical_companies</span><span class="p">,</span> <span class="n">conscientious_citizens</span><span class="p">)</span>
   <span class="k">return</span> <span class="k">unless</span> <span class="n">committed_nations</span> <span class="o">&amp;&amp;</span> <span class="n">ethical_companies</span> <span class="o">&amp;&amp;</span> <span class="n">conscientious_citizens</span>
@@ -136,7 +136,7 @@
 <span class="k">end</span>
 </code></pre></div></div>
 
-<p>But what you really want is something as declarative as chaining with <code class="language-plaintext highlighter-rouge">&amp;.</code>. “So why not <code class="language-plaintext highlighter-rouge">&amp;.</code>?”, you think, ending up with:</p>
+<p>Presume you want something as declarative as chaining with <code class="language-plaintext highlighter-rouge">&amp;.</code>. “Well, why not try <code class="language-plaintext highlighter-rouge">&amp;.</code> itself?”, you think, ending up with:</p>
 
 <div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">fix_global_warming</span><span class="p">(</span><span class="n">committed_nations</span><span class="p">,</span> <span class="n">ethical_companies</span><span class="p">,</span> <span class="n">conscientious_citizens</span><span class="p">)</span>
   <span class="n">committed_nations</span><span class="o">&amp;</span><span class="p">.</span><span class="nf">then</span> <span class="k">do</span> <span class="o">|</span><span class="n">nations</span><span class="o">|</span> 
@@ -149,9 +149,9 @@
 <span class="k">end</span>
 </code></pre></div></div>
 
-<p>It completely hides what the method actually does, and you might have trouble understanding that this is all for checking for the presence of values. The guard clause in the original version is <em>definitely</em> better.</p>
+<p>It completely hides what the method does, and you might have trouble understanding that this is all for checking for the presence of values. The guard clause in the original version is <em>markedly</em> better.</p>
 
-<p>How does Haskell solve this? After all, if writing code in that language were anything like the sample above, people wouldn’t think it’s so great. Fortunately, there are a few ways to make it nicer. We’ll go over some of them.</p>
+<p>How does Haskell solve this? After all, if writing code in that language were anything like the sample above, people wouldn’t think it’s so great. Fortunately, there are a few ways to make the core of the code clearer. We’ll go over some of them.</p>
 
 <p>The first requires special syntax called <a href="https://en.m.wikibooks.org/wiki/Haskell/do_notation">“Do notation”</a>:</p>
 
@@ -172,7 +172,7 @@
   <span class="n">pure</span> <span class="p">(</span><span class="n">fixIt</span> <span class="n">nations</span> <span class="n">companies</span> <span class="n">citizens</span><span class="p">)</span>
 </code></pre></div></div>
 
-<p>Since it’s syntax, we can only approximate it (<a href="https://dry-rb.org/gems/dry-monads/1.0/">dry-monads</a> has its take), and doing so requires a bit of infrastructure. However, there are two other options: relying on it being an <code class="language-plaintext highlighter-rouge">Applicative Functor</code> or using a combinator to sweep the dirt under the rug:</p>
+<p>Since it’s syntax, we can only approximate it (<a href="https://dry-rb.org/gems/dry-monads/1.0/">dry-monads</a> has its take), which requires a bit of infrastructure. Considering that might prove excessive, we can also rely either on it being an <code class="language-plaintext highlighter-rouge">Applicative Functor</code>, as well as on combinators that remove the boilerplate:</p>
 
 <div class="language-haskell highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">-- As an Applicative Functor</span>
 <span class="n">fixGlobalWarming</span> <span class="n">committedNations</span> <span class="n">ethicalCompanies</span> <span class="n">conscientiousCitizens</span> <span class="o">=</span>
@@ -182,18 +182,18 @@
 <span class="n">fixGlobalWarming</span> <span class="o">=</span> <span class="n">liftM3</span> <span class="n">fixIt</span>
 </code></pre></div></div>
 
-<p>The Applicative version would never fit in Ruby exactly at is (though it’s awesome!). The one that can impact us the most is <code class="language-plaintext highlighter-rouge">liftM3</code>.</p>
+<p>The Applicative version would never go well with Ruby. An operator soup is not most Rubyists’ favorite dish (even though it can be delicious!). So that leaves us with <code class="language-plaintext highlighter-rouge">liftM3</code>.</p>
 
-<p>According to its documentation, what it does is “promote a function to a monad”. That means that you can take any function that takes three values and make it work with values in any monad, including Maybe. As you can guess, Haskell needs a <code class="language-plaintext highlighter-rouge">liftM2</code>, as well as a <code class="language-plaintext highlighter-rouge">liftM4</code>, and so on.</p>
+<p>According to its documentation, what it does is “promote a function to a monad.” That means that you can take any function that takes three values and make it work with values in any monad, including Maybe. In that same vein, if you had a function that took two values, you would use <code class="language-plaintext highlighter-rouge">liftM2</code>; four, <code class="language-plaintext highlighter-rouge">liftM4</code>. And so on.</p>
 
-<p>Since we don’t have to differentiate their types, we can define a similar combinator that allows us to work on any number of arguments:</p>
+<p>The reason for so many <code class="language-plaintext highlighter-rouge">liftM*</code> functions is that Haskell needs to account for the possibility each parameter is of a different type. That is, of course, not an issue we have with Ruby. We can, thus, define a similar combinator that allows us to work on any number of arguments:</p>
 
 <div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">with_all_present</span><span class="p">(</span><span class="o">*</span><span class="n">values</span><span class="p">)</span>
   <span class="k">yield</span> <span class="o">*</span><span class="n">values</span> <span class="k">if</span> <span class="n">values</span><span class="p">.</span><span class="nf">none?</span><span class="p">(</span><span class="o">&amp;</span><span class="ss">:nil?</span><span class="p">)</span>
 <span class="k">end</span>
 </code></pre></div></div>
 
-<p>Which gives us a way to rewrite <code class="language-plaintext highlighter-rouge">fix_global_warming</code> as follows:</p>
+<p>This gives us a way to rewrite <code class="language-plaintext highlighter-rouge">fix_global_warming</code> as follows:</p>
 
 <div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">fix_global_warming</span><span class="p">(</span><span class="n">committed_nations</span><span class="p">,</span> <span class="n">ethical_companies</span><span class="p">,</span> <span class="n">conscientious_citizens</span><span class="p">)</span>
   <span class="n">with_all_present</span><span class="p">(</span><span class="n">committed_nations</span><span class="p">,</span> <span class="n">ethical_companies</span><span class="p">,</span> <span class="n">conscientious_citizens</span><span class="p">)</span> <span class="k">do</span>
@@ -202,11 +202,11 @@
 <span class="k">end</span>
 </code></pre></div></div>
 
-<h2 id="is-it-actually-better">Is it actually better?</h2>
+<h2 id="is-it-better">Is it better?</h2>
 
-<p>As programmers, we’re always trying to find a good balance between terseness and readability. It’s easy to go too far, and each individual cares about different things. Knowing that, it would be foolish to be assertive about any technique.</p>
+<p>As programmers, we’re always trying to find a good balance between conciseness and readability. It’s easy to go too far, and each individual cares about different things. Knowing that, it would be foolish to be assertive about any technique.</p>
 
-<p>In my book, both <code class="language-plaintext highlighter-rouge">&amp;.</code> and custom combinators give us tools to end up with code that is more confident and expressive, unmarred by the fear of <code class="language-plaintext highlighter-rouge">nil</code>. They’re great steps in the direction of robustness. And even if it’s true that neither will kill every <code class="language-plaintext highlighter-rouge">NoMethodError</code>, they’ll go a long way.</p>
+<p>In my book, both <code class="language-plaintext highlighter-rouge">&amp;.</code> and custom combinators give us tools to end up more confident and expressive code, unmarred by the fear of <code class="language-plaintext highlighter-rouge">nil</code>. They’re significant steps in the direction of robustness. And even if it’s true that neither will kill every <code class="language-plaintext highlighter-rouge">NoMethodError</code>, they’ll go a long way.</p>
 
 
   </div><a class="u-url" href="/blog/2022/02/02/confident-ruby-in-the-presence-of-nil/" hidden></a>
