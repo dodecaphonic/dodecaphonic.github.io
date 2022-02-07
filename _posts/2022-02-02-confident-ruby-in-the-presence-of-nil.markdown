@@ -145,7 +145,7 @@ fixGlobalWarming committedNations ethicalCompanies conscientiousCitizens = do
   pure (fixIt nations companies citizens)
 ```
 
-Since it's syntax, we can only approximate it ([dry-monads][drymonadsmaybe] has its take), which requires a bit of infrastructure. Considering that might prove excessive, we can also rely either on it being an `Applicative Functor`, as well as on combinators that remove the boilerplate:
+Since it's syntax, we can only approximate it ([dry-monads][drymonadsmaybe] has its take), which requires a bit of infrastructure. Considering that might prove excessive, we can also rely on it being an `Applicative Functor`, as well as on combinators that remove the boilerplate:
 
 ```haskell
 -- As an Applicative Functor
