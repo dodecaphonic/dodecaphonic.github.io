@@ -39,7 +39,7 @@ irb(main):003:0> Task { "success" }
 => Task(?)
 ```
 
-Since it's an asynchronous computation, it doesn't block or immediately have a value (unless you run it in the `:immediate` thread pool — see the documentation). That's why you see `Task(?)`. The computation _does_ start immediately. However, if your `Task` consists of an HTTP call, it's in-flight as soon as a thread is available for scheduling. This is different from other languages and libraries, which often separate describing a computation from running it.
+Since it's an asynchronous computation, it doesn't block or immediately have a value (unless you run it in the `:immediate` thread pool — see the documentation). That's why you see `Task(?)`. The computation _does_ start immediately; if your `Task` consists of an HTTP call, it's in-flight as soon as a thread is available for scheduling. This is different from other languages and libraries, which often separate describing a computation from running it.
 
 When you ask for a Task's value (with `Task#value!`), it blocks until it can produce one:
 
