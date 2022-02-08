@@ -158,9 +158,16 @@ irb(main):007:1*>   (0..9).reduce(Task.pure([])) do |acc, _|
 irb(main):008:1*>     acc.bind { |vs| Task { fetch_example }.fmap { |v| vs + [v] } }
 irb(main):009:1*>   end.value!
 irb(main):010:1*> end
-irb(main):011:0> measure { sequential }
+:sequential
+irb(main):011:1*> def concurrent
+irb(main):012:1*>   List[*(0..9)]
+irb(main):013:1*>     .typed(Task)
+irb(main):014:1*>     .traverse { Task { fetch_example } }
+irb(main):015:1*>     .value!
+irb(main):016:1*> end
+irb(main):017:0> measure { sequential }
 => 3.134079812
-irb(main):012:0> measure { concurrent }
+irb(main):018:0> measure { concurrent }
 => 0.300010159
 ```
 
