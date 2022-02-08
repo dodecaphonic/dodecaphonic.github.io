@@ -172,7 +172,7 @@ irb(main):018:0> measure { concurrent }
 => 0.300010159
 ```
 
-One order of magnitude faster while keeping every guarantee and technique `dry-monads` allows in your toolbelt. That's pretty great!
+One order of magnitude faster while keeping every guarantee `dry-monads` provides in your toolbelt. That's pretty great!
 
 ## Wrapping up
 
