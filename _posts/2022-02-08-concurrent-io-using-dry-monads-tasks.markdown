@@ -165,6 +165,7 @@ irb(main):013:1*>     .typed(Task)
 irb(main):014:1*>     .traverse { Task { fetch_example } }
 irb(main):015:1*>     .value!
 irb(main):016:1*> end
+:concurrent
 irb(main):017:0> measure { sequential }
 => 3.134079812
 irb(main):018:0> measure { concurrent }
