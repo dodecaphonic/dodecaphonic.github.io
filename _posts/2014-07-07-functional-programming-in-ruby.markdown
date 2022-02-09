@@ -11,7 +11,7 @@ On June 21th, 2014, I gave a talk about Functional Programming in Ruby in one of
 
 It didn't get recorded this time, but I thought the slides could be interesting. Here they are.
 
-<script async class="speakerdeck-embed" data-id="77fedf60ddbf0131b761266a7d836638" data-ratio="1.34031413612565" src="http://speakerdeck.com/assets/embed.js"></script>
+<script async class="speakerdeck-embed" data-id="77fedf60ddbf0131b761266a7d836638" data-ratio="1.34031413612565" src="https://speakerdeck.com/assets/embed.js"></script>
 
 [rubyonrio]: http://rubyonrio.org
 [garyb]: https://twitter.com/garybernhardt
