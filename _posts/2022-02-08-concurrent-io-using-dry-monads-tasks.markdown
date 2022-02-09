@@ -101,7 +101,7 @@ Imagine making three HTTP requests to gather all the data you need to build a re
 
 Monads are, however, inherently sequential. That's why they're commonly called ["programmable semicolons"][semicolons]: the fate of the second operation is bound to what happens in the first. This characteristic is at odds with what we want to achieve. `Task` being a Monad is not what will solve our problem.
 
-Every _Monad_ is also an _Applicative Functor_ (and a _Functor_). [Applicative Functors][apfunctors], in very simplified terms (_don't @ me_), allow us to run an _effectful_ computation (basically, a _structure-building operation_, like, say, constructing a `Maybe`) by lifting a function into a structure and applying it to values in that same structure. Being an Applicative Functor does not imply sequencing, and this means code that relies on it also does not require operations to run sequentially.
+Every _Monad_ is also an _Applicative Functor_ (and a _Functor_). [Applicative Functors][apfunctors], in very simplified terms (_don't @ me_), allow us to run an _effectful_ computation (basically, a _structure-building operation_, like, say, constructing a `Maybe`) by lifting a function into a structure and applying it to values in that same structure. Being an Applicative Functor does not imply a dependency between computations (though, of course, applying a function resolves them in a certain order), and this means code that relies on it also does not require operations to run one after the other.
 
 `dry-monads` implements that notion for its structures. We wrap the function by calling `pure` on the structure and provide it with arguments using `apply`:
 
